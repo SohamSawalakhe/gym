@@ -43,7 +43,8 @@ export async function getSessionForGym(gymSlug: string): Promise<JWTPayload | nu
     if (!res.ok) return null;
     const data = await res.json();
     
-    if (!data.user || !data.user.gym || data.user.gym.slug !== gymSlug) {
+    const decodedGymSlug = decodeURIComponent(gymSlug).toLowerCase();
+    if (!data.user || !data.user.gym || data.user.gym.slug.toLowerCase() !== decodedGymSlug) {
       return null;
     }
 

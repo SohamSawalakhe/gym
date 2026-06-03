@@ -34,7 +34,8 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
   const gym = activeUser.gym;
 
   // Enforce tenant scoping and access check
-  if (!gym || (activeUser.role !== 'SUPERADMIN' && gym.slug !== params.gymSlug)) {
+  const decodedGymSlug = decodeURIComponent(params.gymSlug).toLowerCase();
+  if (!gym || (activeUser.role !== 'SUPERADMIN' && gym.slug.toLowerCase() !== decodedGymSlug)) {
     redirect('/login');
   }
 
