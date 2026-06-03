@@ -15,7 +15,7 @@ export const whatsappService = {
     payload: {
       accessToken: string;
       wabaId: string;
-      phoneNumberId: string;
+      phoneNumberId?: string;
       businessId: string;
     }
   ): Promise<any> {
@@ -45,12 +45,55 @@ export const whatsappService = {
       }
     }
 
+    // Auto-resolve Phone Number ID if missing
+    let finalPhoneNumberId = phoneNumberId;
+    if (!finalPhoneNumberId && !longLivedToken.startsWith('mock_')) {
+      try {
+        console.log(`[WhatsApp Service] Phone number ID is missing for WABA ID: ${wabaId}. Querying Meta for WABA phone numbers...`);
+        const phoneListUrl = `${META_GRAPH_BASE_URL}/${wabaId}/phone_numbers?access_token=${longLivedToken}`;
+        const phoneListResp = await fetch(phoneListUrl);
+        const phoneListData = (await phoneListResp.json()) as any;
+        if (phoneListData?.data && phoneListData.data.length > 0) {
+          finalPhoneNumberId = phoneListData.data[0].id;
+          console.log(`[WhatsApp Service] Resolved phone number ID: ${finalPhoneNumberId}`);
+        } else {
+          console.warn(`[WhatsApp Service] No phone numbers found associated with WABA ID: ${wabaId}`, phoneListData);
+        }
+      } catch (err) {
+        console.error('[WhatsApp Service] Failed to retrieve phone number list from Meta:', err);
+      }
+    } else if (!finalPhoneNumberId) {
+      finalPhoneNumberId = `mock_phone_id_${Math.floor(Math.random() * 100000000)}`;
+      console.log(`[WhatsApp Service] Mock token detected. Generated mock phone number ID: ${finalPhoneNumberId}`);
+    }
+
+    // Check coexistence eligibility status (is_on_biz_app)
+    let isOnBizApp = false;
+    if (finalPhoneNumberId && !longLivedToken.startsWith('mock_')) {
+      try {
+        console.log(`[WhatsApp Service] Checking if phone ID ${finalPhoneNumberId} is on WhatsApp Business App (Coexistence)...`);
+        const statusUrl = `${META_GRAPH_BASE_URL}/${finalPhoneNumberId}?fields=is_on_biz_app,platform_type&access_token=${longLivedToken}`;
+        const statusResp = await fetch(statusUrl);
+        const statusData = (await statusResp.json()) as any;
+        if (statusResp.ok && statusData) {
+          isOnBizApp = statusData.is_on_biz_app === true;
+          console.log(`[WhatsApp Service] Coexistence Check: is_on_biz_app = ${isOnBizApp}, platform_type = ${statusData.platform_type}`);
+        }
+      } catch (err) {
+        console.error('[WhatsApp Service] Failed to fetch is_on_biz_app status:', err);
+      }
+    } else if (longLivedToken.startsWith('mock_')) {
+      // For testing/mocking in localhost sandbox, enable coexistence if mock token has "coexistence" in it or by default
+      isOnBizApp = true;
+      console.log(`[WhatsApp Service] Mock token detected. Simulating Coexistence mode active (isOnBizApp = true).`);
+    }
+
     // 2. Query phone number details to extract the verified phone number
     let phoneNumber = 'Unknown';
     if (!longLivedToken.startsWith('mock_')) {
       try {
-        console.log(`[WhatsApp Service] Retrieving display phone number details for Phone ID: ${phoneNumberId}...`);
-        const phoneUrl = `${META_GRAPH_BASE_URL}/${phoneNumberId}?access_token=${longLivedToken}`;
+        console.log(`[WhatsApp Service] Retrieving display phone number details for Phone ID: ${finalPhoneNumberId}...`);
+        const phoneUrl = `${META_GRAPH_BASE_URL}/${finalPhoneNumberId}?access_token=${longLivedToken}`;
         const response = await fetch(phoneUrl);
         const data = (await response.json()) as any;
         if (data.display_phone_number) {
@@ -72,34 +115,38 @@ export const whatsappService = {
 
     // 3. Register Phone Number and Subscribe App if live credentials exist
     if (!longLivedToken.startsWith('mock_')) {
-      try {
-        const pin = Math.floor(100000 + Math.random() * 900000).toString();
-        const registerUrl = `${META_GRAPH_BASE_URL}/${phoneNumberId}/register`;
-        console.log(`[WhatsApp Service] Registering phone number with Meta Graph API. URL: ${registerUrl}`);
-        const regResponse = await fetch(registerUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${longLivedToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            pin,
-          }),
-        });
+      if (!isOnBizApp) {
+        try {
+          const pin = Math.floor(100000 + Math.random() * 900000).toString();
+          const registerUrl = `${META_GRAPH_BASE_URL}/${finalPhoneNumberId}/register`;
+          console.log(`[WhatsApp Service] Registering phone number with Meta Graph API. URL: ${registerUrl}`);
+          const regResponse = await fetch(registerUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${longLivedToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              pin,
+            }),
+          });
 
-        const regData = (await regResponse.json()) as any;
-        if (!regResponse.ok) {
-          if (regData?.error?.code !== 131045 && regData?.error?.code !== 133005) {
-            console.error('[WhatsApp Service] Phone registration failed:', regData);
+          const regData = (await regResponse.json()) as any;
+          if (!regResponse.ok) {
+            if (regData?.error?.code !== 131045 && regData?.error?.code !== 133005) {
+              console.error('[WhatsApp Service] Phone registration failed:', regData);
+            } else {
+              console.log('[WhatsApp Service] Phone number already registered (code 131045/133005).');
+            }
           } else {
-            console.log('[WhatsApp Service] Phone number already registered (code 131045/133005).');
+            console.log('[WhatsApp Service] Phone number registered successfully.');
           }
-        } else {
-          console.log('[WhatsApp Service] Phone number registered successfully.');
+        } catch (err) {
+          console.error('[WhatsApp Service] Phone number registration error:', err);
         }
-      } catch (err) {
-        console.error('[WhatsApp Service] Phone number registration error:', err);
+      } else {
+        console.log(`[WhatsApp Service] Phone ID ${finalPhoneNumberId} is on Business App (Coexistence). Skipping Meta registration step as per Meta guidelines.`);
       }
 
       try {
@@ -130,7 +177,7 @@ export const whatsappService = {
       data: {
         whatsapp_connected: true,
         whatsapp_phone_number: phoneNumber,
-        whatsapp_phone_number_id: phoneNumberId,
+        whatsapp_phone_number_id: finalPhoneNumberId,
         whatsapp_waba_id: wabaId,
         whatsapp_business_id: businessId,
         whatsapp_access_token: encryptedToken,
@@ -146,10 +193,68 @@ export const whatsappService = {
     await db.auditLog.create({
       data: {
         action: 'WHATSAPP_CONNECT',
-        details: `Connected WhatsApp Cloud API for number: +${phoneNumber}`,
+        details: `Connected WhatsApp Cloud API for number: +${phoneNumber}${isOnBizApp ? ' (Coexistence Mode)' : ''}`,
         gymId,
       },
     });
+
+    // 4. Trigger contacts and history synchronization if Coexistence is active
+    if (isOnBizApp) {
+      if (!longLivedToken.startsWith('mock_')) {
+        // Step 1: Initiate contacts synchronization
+        try {
+          console.log(`[WhatsApp Service] Initiating Contacts Sync via SMB App Data API for phone ID: ${finalPhoneNumberId}...`);
+          const syncContactsUrl = `${META_GRAPH_BASE_URL}/${finalPhoneNumberId}/smb_app_data`;
+          const syncContactsResp = await fetch(syncContactsUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${longLivedToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              sync_type: 'smb_app_state_sync',
+            }),
+          });
+          const syncContactsData = await syncContactsResp.json() as any;
+          console.log(`[WhatsApp Service] Contacts sync response:`, syncContactsData);
+        } catch (err) {
+          console.error('[WhatsApp Service] Contacts sync failed to initiate:', err);
+        }
+
+        // Step 2: Initiate message history synchronization
+        try {
+          console.log(`[WhatsApp Service] Initiating Message History Sync via SMB App Data API for phone ID: ${finalPhoneNumberId}...`);
+          const syncHistoryUrl = `${META_GRAPH_BASE_URL}/${finalPhoneNumberId}/smb_app_data`;
+          const syncHistoryResp = await fetch(syncHistoryUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${longLivedToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              sync_type: 'history',
+            }),
+          });
+          const syncHistoryData = await syncHistoryResp.json() as any;
+          console.log(`[WhatsApp Service] Message history sync response:`, syncHistoryData);
+        } catch (err) {
+          console.error('[WhatsApp Service] Message history sync failed to initiate:', err);
+        }
+      } else {
+        console.log(`[WhatsApp Service] Mock Coexistence: Simulating contacts and history synchronization initialization.`);
+        // Run a simulated background job to seed mock contacts and messages
+        setTimeout(async () => {
+          try {
+            console.log(`[WhatsApp Service] Simulating incoming mock smb_app_state_sync and history webhook events...`);
+            await whatsappService.simulateMockCoexistenceSync(gymId);
+          } catch (e) {
+            console.error('Failed to run mock coexistence sync simulation:', e);
+          }
+        }, 3000);
+      }
+    }
 
     console.log(`[WhatsApp Service] Connection setup successfully completed for Gym ID: ${gymId}`);
     return {
@@ -670,6 +775,57 @@ export const whatsappService = {
             const messageId = message.id;
             const from = message.from; // Customer's number
             const timestamp = new Date(parseInt(message.timestamp) * 1000);
+
+            // Handle message edits
+            if (message.type === 'edit') {
+              const originalMessageId = message.edit?.original_message_id;
+              const editMsg = message.edit?.message;
+              let editedText = '';
+              if (editMsg?.type === 'text') {
+                editedText = editMsg.text?.body || '';
+              } else if (editMsg?.type === 'image') {
+                editedText = `[Image with caption: ${editMsg.image?.caption || ''}]`;
+              } else {
+                editedText = `[Edited message: ${editMsg?.type || 'unknown'}]`;
+              }
+
+              console.log(`[WhatsApp Webhook Messages] Message Edit event. Original ID: ${originalMessageId}, New Text: "${editedText}"`);
+
+              if (originalMessageId) {
+                const existingMsg = await db.whatsAppMessage.findUnique({
+                  where: { messageId: originalMessageId },
+                });
+                if (existingMsg) {
+                  await db.whatsAppMessage.update({
+                    where: { messageId: originalMessageId },
+                    data: { text: editedText },
+                  });
+                  console.log(`[WhatsApp Webhook Messages] Successfully edited message ID: ${originalMessageId} in database.`);
+                }
+              }
+              continue; // Skip standard message logic and chatbot trigger
+            }
+
+            // Handle message revokes
+            if (message.type === 'revoke') {
+              const originalMessageId = message.revoke?.original_message_id;
+              console.log(`[WhatsApp Webhook Messages] Message Revoke event. Original ID: ${originalMessageId}`);
+
+              if (originalMessageId) {
+                const existingMsg = await db.whatsAppMessage.findUnique({
+                  where: { messageId: originalMessageId },
+                });
+                if (existingMsg) {
+                  await db.whatsAppMessage.update({
+                    where: { messageId: originalMessageId },
+                    data: { text: '[This message was deleted]' },
+                  });
+                  console.log(`[WhatsApp Webhook Messages] Successfully revoked message ID: ${originalMessageId} in database.`);
+                }
+              }
+              continue; // Skip standard message logic and chatbot trigger
+            }
+
             let textContent = '';
 
             if (message.type === 'text') {
@@ -815,6 +971,199 @@ export const whatsappService = {
               },
             });
             console.log(`[WhatsApp Webhook TemplateStatus] Template Status Update: ${templateName} is now ${status} for Gym ID: ${gym.id}`);
+          }
+        }
+
+        // 5. Handle WABA account status changes (coexistence offboarding/partner removal)
+        if (change.field === 'account_update' && value.event) {
+          const wabaId = entry.id;
+          const event = value.event;
+          console.log(`[WhatsApp Webhook account_update] WABA: ${wabaId}, Event: ${event}`);
+
+          const gym = await db.gym.findFirst({
+            where: { whatsapp_waba_id: wabaId },
+          });
+
+          if (gym) {
+            if (event === 'PARTNER_REMOVED' || event === 'ACCOUNT_OFFBOARDED') {
+              await db.gym.update({
+                where: { id: gym.id },
+                data: { whatsapp_connected: false },
+              });
+              console.log(`[WhatsApp Webhook account_update] Disconnected WhatsApp for Gym ID: ${gym.id} due to offboard/partner remove event.`);
+            } else if (event === 'ACCOUNT_RECONNECTED') {
+              await db.gym.update({
+                where: { id: gym.id },
+                data: { whatsapp_connected: true },
+              });
+              console.log(`[WhatsApp Webhook account_update] Reconnected WhatsApp for Gym ID: ${gym.id}.`);
+            }
+          }
+        }
+
+        // 6. Handle SMB Message Echoes (messages sent from the WhatsApp Business App mobile client)
+        if (change.field === 'smb_message_echoes' || (value.message_echoes && value.message_echoes.length > 0)) {
+          const wabaId = entry.id;
+          const gym = await db.gym.findFirst({
+            where: { whatsapp_waba_id: wabaId },
+          });
+
+          if (gym && value.message_echoes) {
+            for (const echo of value.message_echoes) {
+              const messageId = echo.id;
+              const from = echo.from;
+              const recipient = echo.to;
+              const timestamp = new Date(parseInt(echo.timestamp) * 1000);
+              
+              let textContent = '';
+              if (echo.type === 'text') {
+                textContent = echo.text?.body || '';
+              } else {
+                textContent = `[Mobile Outbound: ${echo.type}]`;
+              }
+
+              console.log(`[WhatsApp Webhook smb_message_echoes] Echo message ID: ${messageId}, to: +${recipient}`);
+
+              // Store echo message
+              await db.whatsAppMessage.upsert({
+                where: { messageId },
+                update: { status: 'READ' },
+                create: {
+                  gymId: gym.id,
+                  messageId,
+                  senderPhone: from,
+                  recipientPhone: recipient,
+                  text: textContent,
+                  direction: 'ECHO',
+                  status: 'READ',
+                  createdAt: timestamp,
+                },
+              });
+
+              // Log notification copy
+              const member = await db.member.findFirst({
+                where: { phone: recipient, gymId: gym.id },
+              });
+
+              if (member) {
+                await db.notification.create({
+                  data: {
+                    gymId: gym.id,
+                    memberId: member.id,
+                    recipientPhone: recipient,
+                    title: 'WhatsApp Mobile Staff Reply',
+                    message: textContent,
+                    type: 'OUTBOUND',
+                    status: 'SENT',
+                  },
+                });
+              }
+            }
+          }
+        }
+
+        // 7. Handle SMB Contacts Sync
+        if (change.field === 'smb_app_state_sync' || (value.state_sync && value.state_sync.length > 0)) {
+          const wabaId = entry.id;
+          const gym = await db.gym.findFirst({
+            where: { whatsapp_waba_id: wabaId },
+          });
+
+          if (gym && value.state_sync) {
+            console.log(`[WhatsApp Webhook smb_app_state_sync] Processing ${value.state_sync.length} sync contacts...`);
+            for (const stateObj of value.state_sync) {
+              if (stateObj.type === 'contact') {
+                const contact = stateObj.contact;
+                const action = stateObj.action;
+                const phone = contact.phone_number;
+                const name = contact.full_name || contact.first_name || `Contact ${phone.slice(-4)}`;
+
+                if (action === 'add') {
+                  await db.member.upsert({
+                    where: { gymId_phone: { gymId: gym.id, phone } },
+                    update: { name },
+                    create: { gymId: gym.id, phone, name },
+                  });
+                  console.log(`[WhatsApp Webhook smb_app_state_sync] Upserted synced contact: ${name} (+${phone})`);
+                }
+              }
+            }
+          }
+        }
+
+        // 8. Handle WhatsApp Business App History Sync
+        if (change.field === 'history' || (value.history && value.history.length > 0)) {
+          const wabaId = entry.id;
+          const gym = await db.gym.findFirst({
+            where: { whatsapp_waba_id: wabaId },
+          });
+
+          if (gym && value.history) {
+            console.log(`[WhatsApp Webhook history] Processing history sync items...`);
+            for (const histItem of value.history) {
+              if (histItem.errors && histItem.errors.length > 0) {
+                console.warn(`[WhatsApp Webhook history] History sharing turned off or failed:`, histItem.errors);
+                continue;
+              }
+
+              if (histItem.threads) {
+                for (const thread of histItem.threads) {
+                  const memberPhone = thread.id;
+
+                  // Ensure member exists
+                  let member = await db.member.findFirst({
+                    where: { phone: memberPhone, gymId: gym.id },
+                  });
+
+                  if (!member) {
+                    member = await db.member.create({
+                      data: {
+                        gymId: gym.id,
+                        phone: memberPhone,
+                        name: `Contact ${memberPhone.slice(-4)}`,
+                      },
+                    });
+                  }
+
+                  for (const histMsg of thread.messages) {
+                    const messageId = histMsg.id;
+                    const from = histMsg.from;
+                    const timestamp = new Date(parseInt(histMsg.timestamp) * 1000);
+                    const type = histMsg.type;
+
+                    let textContent = '';
+                    if (type === 'text') {
+                      textContent = histMsg.text?.body || '';
+                    } else {
+                      textContent = `[Historical Message: ${type}]`;
+                    }
+
+                    // Determine direction:
+                    // If histMsg.from === gym.whatsapp_phone_number, it was sent by the business (ECHO).
+                    // Otherwise, it was sent by the customer (INBOUND).
+                    const isFromBusiness = from === gym.whatsapp_phone_number;
+                    const direction = isFromBusiness ? 'ECHO' : 'INBOUND';
+                    const status = histMsg.history_context?.status || 'READ';
+
+                    await db.whatsAppMessage.upsert({
+                      where: { messageId },
+                      update: { status: status.toUpperCase() },
+                      create: {
+                        gymId: gym.id,
+                        messageId,
+                        senderPhone: from,
+                        recipientPhone: isFromBusiness ? memberPhone : (gym.whatsapp_phone_number || 'Unknown'),
+                        text: textContent,
+                        direction,
+                        status: status.toUpperCase(),
+                        createdAt: timestamp,
+                      },
+                    });
+                  }
+                  console.log(`[WhatsApp Webhook history] Processed ${thread.messages.length} historical messages for member: ${member.name}`);
+                }
+              }
+            }
           }
         }
       }
@@ -984,6 +1333,107 @@ export const whatsappService = {
     }
 
     return { success: true };
+  },
+
+  /**
+   * Simulates WhatsApp Business App Coexistence contacts and history synchronization webhook events in Mock mode.
+   */
+  async simulateMockCoexistenceSync(gymId: string): Promise<void> {
+    const gym = await db.gym.findUnique({ where: { id: gymId } });
+    if (!gym) return;
+
+    console.log(`[WhatsApp Service] Simulating mock coexistence state sync for Gym ID: ${gymId}`);
+
+    // 1. Simulate smb_app_state_sync contacts sync payload
+    const mockContactsPayload = {
+      object: 'whatsapp_business_account',
+      entry: [{
+        id: gym.whatsapp_waba_id || 'mock_waba_id_coex',
+        time: Math.floor(Date.now() / 1000),
+        changes: [{
+          value: {
+            messaging_product: 'whatsapp',
+            metadata: {
+              display_phone_number: gym.whatsapp_phone_number || '919988776655',
+              phone_number_id: gym.whatsapp_phone_number_id || 'mock_phone_id_coex'
+            },
+            state_sync: [
+              {
+                type: 'contact',
+                contact: {
+                  full_name: 'Coexistence Member Jane',
+                  first_name: 'Jane',
+                  phone_number: '918888888888'
+                },
+                action: 'add',
+                metadata: { timestamp: Math.floor(Date.now() / 1000).toString() }
+              },
+              {
+                type: 'contact',
+                contact: {
+                  full_name: 'Coexistence Guest John',
+                  first_name: 'John',
+                  phone_number: '917777777777'
+                },
+                action: 'add',
+                metadata: { timestamp: Math.floor(Date.now() / 1000).toString() }
+              }
+            ]
+          },
+          field: 'smb_app_state_sync'
+        }]
+      }]
+    };
+
+    await whatsappService.processWebhook(mockContactsPayload);
+
+    // 2. Simulate history sync messages sync payload
+    const mockHistoryPayload = {
+      object: 'whatsapp_business_account',
+      entry: [{
+        id: gym.whatsapp_waba_id || 'mock_waba_id_coex',
+        time: Math.floor(Date.now() / 1000),
+        changes: [{
+          value: {
+            messaging_product: 'whatsapp',
+            metadata: {
+              display_phone_number: gym.whatsapp_phone_number || '919988776655',
+              phone_number_id: gym.whatsapp_phone_number_id || 'mock_phone_id_coex'
+            },
+            history: [{
+              metadata: { phase: 2, chunk_order: 1, progress: 100 },
+              threads: [
+                {
+                  id: '918888888888',
+                  messages: [
+                    {
+                      from: '918888888888',
+                      id: `wamid.HBgLMTY0NjcwNDM1OTUVAgARGBIyNDlBOEI5QUQ4NDc0N0FCNjM${Math.floor(Math.random() * 100)}`,
+                      timestamp: Math.floor((Date.now() - 3600000) / 1000).toString(),
+                      type: 'text',
+                      text: { body: 'Hey! I want to know about your Monthly Basic plan.' },
+                      history_context: { status: 'READ' }
+                    },
+                    {
+                      from: gym.whatsapp_phone_number || '919988776655',
+                      to: '918888888888',
+                      id: `wamid.HBgLMTY0NjcwNDM1OTUVAgARGBIyNDlBOEI5QUQ4NDc0N0FCNjM${Math.floor(Math.random() * 100)}`,
+                      timestamp: Math.floor((Date.now() - 3000000) / 1000).toString(),
+                      type: 'text',
+                      text: { body: 'Hello Jane! The Monthly Basic plan is Rs 999. You can renew it via UPI or Razorpay.' },
+                      history_context: { status: 'READ' }
+                    }
+                  ]
+                }
+              ]
+            }]
+          },
+          field: 'history'
+        }]
+      }]
+    };
+
+    await whatsappService.processWebhook(mockHistoryPayload);
   },
 };
 

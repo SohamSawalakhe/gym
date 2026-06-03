@@ -164,8 +164,8 @@ router.post('/embedded-setup', async (req: RequestWithUser, res: Response): Prom
     const { gymSlug } = req.params;
     const { code, wabaId, phoneNumberId, businessId } = req.body;
 
-    if (!code || !wabaId || !phoneNumberId) {
-      return res.status(400).json({ error: 'Missing OAuth authorization code, WABA ID, or Phone Number ID.' });
+    if (!code || !wabaId) {
+      return res.status(400).json({ error: 'Missing OAuth authorization code or WABA ID.' });
     }
 
     const gym = await db.gym.findUnique({ where: { slug: gymSlug } });

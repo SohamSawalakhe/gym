@@ -175,11 +175,11 @@ export default function WhatsAppSetupPage() {
       if (payload.type === "WA_EMBEDDED_SIGNUP") {
         console.log("📩 WA_EMBEDDED_SIGNUP:", payload);
 
-        if (payload.event === "FINISH") {
+        if (payload.event === "FINISH" || payload.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
           setSetupStep("WhatsApp account received from Meta...");
           const newSession = {
             whatsappBusinessId: payload.data.waba_id,
-            whatsappPhoneNumberId: payload.data.phone_number_id,
+            whatsappPhoneNumberId: payload.data.phone_number_id || "",
           };
           setEmbeddedSession(newSession);
           sessionRef.current = newSession;
@@ -447,7 +447,10 @@ export default function WhatsAppSetupPage() {
         config_id: config.facebookConfigId || "",
         response_type: "code",
         override_default_response_type: true,
-        extras: { version: "v3" },
+        extras: {
+          featureType: "whatsapp_business_app_onboarding",
+          sessionInfoVersion: "3",
+        },
       }
     );
   }
