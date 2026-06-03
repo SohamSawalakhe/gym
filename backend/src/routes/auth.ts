@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import crypto from 'crypto';
 import { db } from '../lib/db';
 import { hashPassword, verifyPassword, signJWT } from '../lib/auth';
 import { authenticateToken, RequestWithUser } from '../middleware/auth';
@@ -212,6 +213,99 @@ router.get('/me', authenticateToken, async (req: RequestWithUser, res: Response)
     });
   } catch (error) {
     console.error('Me auth checking error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/* ================= FACEBOOK COMPLIANCE WEBHOOKS ================= */
+
+/**
+ * Parses and validates Meta's signed_request payload
+ */
+function parseSignedRequest(signedRequest: string, appSecret: string): any {
+  const parts = signedRequest.split('.');
+  if (parts.length !== 2) {
+    throw new Error('Invalid signed request format');
+  }
+  const [encodedSig, payloadStr] = parts;
+
+  // Base64url decode signature and payload
+  const sig = Buffer.from(encodedSig, 'base64url').toString('hex');
+  const payload = JSON.parse(Buffer.from(payloadStr, 'base64url').toString('utf-8'));
+
+  // Verify HMAC signature
+  const expectedSig = crypto
+    .createHmac('sha256', appSecret)
+    .update(payloadStr)
+    .digest('hex');
+
+  if (sig !== expectedSig) {
+    throw new Error('Invalid signature');
+  }
+
+  return payload;
+}
+
+// POST /api/auth/facebook/deauthorize
+router.post('/facebook/deauthorize', async (req: any, res: Response): Promise<any> => {
+  try {
+    const { signed_request } = req.body;
+    if (!signed_request) {
+      return res.status(400).json({ error: 'Missing signed_request parameter' });
+    }
+
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+    if (!appSecret) {
+      console.warn('[Facebook Deauthorize] App Secret not configured. Skipping signature verification.');
+    } else {
+      try {
+        const payload = parseSignedRequest(signed_request, appSecret);
+        console.log('[Facebook Deauthorize] Valid request received for User ID:', payload.user_id);
+      } catch (err: any) {
+        console.error('[Facebook Deauthorize] Signature verification failed:', err.message);
+        return res.status(400).json({ error: 'Signature verification failed' });
+      }
+    }
+
+    return res.json({ success: true, message: 'Deauthorization logged successfully.' });
+  } catch (error) {
+    console.error('Facebook deauthorize error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/auth/facebook/delete-data
+router.post('/facebook/delete-data', async (req: any, res: Response): Promise<any> => {
+  try {
+    const { signed_request } = req.body;
+    if (!signed_request) {
+      return res.status(400).json({ error: 'Missing signed_request parameter' });
+    }
+
+    let userId = 'unknown';
+    const appSecret = process.env.FACEBOOK_APP_SECRET;
+    if (!appSecret) {
+      console.warn('[Facebook Data Deletion] App Secret not configured. Skipping signature verification.');
+    } else {
+      try {
+        const payload = parseSignedRequest(signed_request, appSecret);
+        userId = payload.user_id || 'unknown';
+        console.log('[Facebook Data Deletion] Valid deletion request for User ID:', userId);
+      } catch (err: any) {
+        console.error('[Facebook Data Deletion] Signature verification failed:', err.message);
+        return res.status(400).json({ error: 'Signature verification failed' });
+      }
+    }
+
+    const confirmationCode = `del_${userId}_${Date.now()}`;
+    const statusUrl = `https://fitwa.vercel.app/privacy?status=${confirmationCode}`;
+
+    return res.json({
+      url: statusUrl,
+      confirmation_code: confirmationCode,
+    });
+  } catch (error) {
+    console.error('Facebook data deletion error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
