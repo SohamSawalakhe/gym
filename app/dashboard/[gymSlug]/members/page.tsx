@@ -3,15 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Users,
   Search,
   UserPlus,
-  Mail,
-  Phone,
-  Calendar,
-  MapPin,
-  FileText,
-  ShieldAlert,
 } from 'lucide-react';
 
 interface MemberData {
@@ -41,6 +34,17 @@ export default function MembersPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isAdding) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAdding(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAdding]);
 
   // Form Fields
   const [name, setName] = useState('');
@@ -137,9 +141,9 @@ export default function MembersPage() {
       </div>
 
       {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6">
         {/* Members List Table */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md xl:col-span-2 space-y-4">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-4">
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
               <Search className="h-4 w-4" />
@@ -164,6 +168,11 @@ export default function MembersPage() {
                   <tr className="border-b border-zinc-900 text-zinc-400 font-bold uppercase tracking-wider">
                     <th className="py-3 px-4">Name</th>
                     <th className="py-3 px-4">Phone / WhatsApp</th>
+                    <th className="py-3 px-4">Email</th>
+                    <th className="py-3 px-4">Date of Birth</th>
+                    <th className="py-3 px-4">Emergency Contact</th>
+                    <th className="py-3 px-4">Address</th>
+                    <th className="py-3 px-4">Medical Notes / Goals</th>
                     <th className="py-3 px-4">Plan Status</th>
                     <th className="py-3 px-4">Expiry</th>
                     <th className="py-3 px-4">Bot Rule</th>
@@ -176,6 +185,17 @@ export default function MembersPage() {
                       <tr key={m.id} className="hover:bg-zinc-900/30 transition-all">
                         <td className="py-3.5 px-4 font-bold text-white">{m.name}</td>
                         <td className="py-3.5 px-4 text-zinc-300 font-mono">{m.phone}</td>
+                        <td className="py-3.5 px-4 text-zinc-300">{m.email || '--'}</td>
+                        <td className="py-3.5 px-4 text-zinc-300">
+                          {m.dob ? new Date(m.dob).toLocaleDateString('en-IN') : '--'}
+                        </td>
+                        <td className="py-3.5 px-4 text-zinc-300">{m.emergencyContact || '--'}</td>
+                        <td className="py-3.5 px-4 text-zinc-300 max-w-[150px] truncate" title={m.address || ''}>
+                          {m.address || '--'}
+                        </td>
+                        <td className="py-3.5 px-4 text-zinc-300 max-w-[200px] truncate" title={m.notes || ''}>
+                          {m.notes || '--'}
+                        </td>
                         <td className="py-3.5 px-4">
                           {activeSub ? (
                             <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
@@ -210,10 +230,18 @@ export default function MembersPage() {
           </div>
         </div>
 
-        {/* Add Member Slideover / Card */}
-        {isAdding ? (
-          <div className="rounded-2xl border border-cyan-800 bg-zinc-950/70 p-6 shadow-2xl shadow-cyan-950/10 xl:col-span-1 h-fit">
-            <h3 className="text-lg font-bold text-white mb-4">Add Member Profile</h3>
+      </div>
+
+      {isAdding && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+          onClick={() => setIsAdding(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-cyan-800 bg-zinc-950 p-6 shadow-2xl space-y-4"
+          >
+            <h3 className="text-lg font-bold text-white mb-2">Add Member Profile</h3>
             
             {error && (
               <div className="mb-4 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs font-semibold text-rose-400">
@@ -319,22 +347,8 @@ export default function MembersPage() {
               </div>
             </form>
           </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center text-center text-zinc-500 xl:col-span-1 h-80">
-            <Users className="h-10 w-10 text-zinc-700 mb-2" />
-            <h4 className="text-sm font-bold text-white">Add New Profile</h4>
-            <p className="text-xs text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
-              Open the form to register new custom members in the system manually.
-            </p>
-            <button
-              onClick={() => setIsAdding(true)}
-              className="mt-4 rounded-xl border border-zinc-850 px-4 py-2 text-xs font-semibold text-cyan-400 hover:bg-zinc-900 hover:text-white transition-all"
-            >
-              Configure Member
-            </button>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
