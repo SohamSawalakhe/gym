@@ -12,15 +12,84 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* =====================================================
+   THEME STYLING OVERRIDES (DARK, GREY, LIGHT)
+   ===================================================== */
+
+/* Default / Dark Theme */
+:root, [data-theme="dark"] {
+  --color-zinc-950: #09090b;
+  --color-zinc-900: #18181b;
+  --color-zinc-850: #202024;
+  --color-zinc-800: #27272a;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-600: #52525b;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-100: #f4f4f5;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  
+  --background: #09090b;
+  --foreground: #f4f4f5;
+}
+
+/* Grey Theme (Warm dark grey zinc-900 background) */
+[data-theme="grey"] {
+  --color-zinc-950: #18181b;
+  --color-zinc-900: #27272a;
+  --color-zinc-850: #3f3f46;
+  --color-zinc-800: #52525b;
+  --color-zinc-700: #71717a;
+  --color-zinc-600: #a1a1aa;
+  --color-zinc-500: #d4d4d8;
+  --color-zinc-400: #e4e4e7;
+  --color-zinc-300: #f4f4f5;
+  --color-zinc-200: #fafafa;
+  --color-zinc-100: #ffffff;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --background: #18181b;
+  --foreground: #f4f4f5;
+}
+
+/* Light Theme (Fully inverted light layout) */
+[data-theme="light"] {
+  --color-zinc-950: #ffffff;
+  --color-zinc-900: #f4f4f5;
+  --color-zinc-850: #e4e4e7;
+  --color-zinc-800: #d4d4d8;
+  --color-zinc-700: #a1a1aa;
+  --color-zinc-600: #71717a;
+  --color-zinc-500: #52525b;
+  --color-zinc-400: #3f3f46;
+  --color-zinc-300: #27272a;
+  --color-zinc-200: #18181b;
+  --color-zinc-100: #09090b;
+  --color-white: #09090b;    /* Invert white text to black */
+  --color-black: #ffffff;    /* Invert black text/bg to white */
+
+  --background: #ffffff;
+  --foreground: #09090b;
+}
+
+/* Page global background transitions */
+html, body {
+  background-color: var(--color-zinc-950) !important;
+  color: var(--color-zinc-100) !important;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Smooth transition for sidebars, main contents, and cards */
+aside, header, main, table, tr, td, th, div, button, input, textarea, select {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

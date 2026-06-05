@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { fetchBackend } from '@/lib/api-client';
+import ThemeToggle from '@/components/dashboard/ThemeToggle';
 import {
   Dumbbell,
   LayoutDashboard,
@@ -122,7 +123,8 @@ export default async function DashboardLayout(props: DashboardLayoutProps) {
             <span className="text-sm font-extrabold text-white">{gym.name}</span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
             <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-[10px] font-bold text-cyan-400 border border-cyan-500/20">
               🟢 System Online
             </span>

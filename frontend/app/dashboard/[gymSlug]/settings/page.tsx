@@ -1187,6 +1187,28 @@ export default function WhatsAppSetupPage() {
         )}
       </AnimatePresence>
       <ToastContainer theme="dark" position="bottom-right" />
+      <style>{`
+        :root {
+          --toastify-color-dark: #27272a !important; /* zinc-800 */
+          --toastify-color-info: #06b6d4 !important; /* cyan-500 */
+          --toastify-color-success: #10b981 !important; /* emerald-500 */
+          --toastify-color-warning: #f59e0b !important; /* amber-500 */
+          --toastify-color-error: #ef4444 !important; /* rose-500 */
+          --toastify-font-family: inherit !important;
+        }
+        .Toastify__toast {
+          border-radius: 16px !important;
+          border: 1px solid #3f3f46 !important; /* zinc-700 */
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+        }
+        .Toastify__toast--dark {
+          background-color: #27272a !important; /* zinc-800 dark grey */
+          color: #f4f4f5 !important; /* zinc-100 */
+        }
+        .Toastify__progress-bar--dark {
+          background: linear-gradient(to right, #06b6d4, #8b5cf6) !important; /* gradient slider */
+        }
+      `}</style>
     </div>
   );
 }
