@@ -87,6 +87,23 @@ export default function MessageTemplatesPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [currentTheme, setCurrentTheme] = useState<string>('dark');
+  const [showFilters, setShowFilters] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const htmlEl = document.documentElement;
+    const initialTheme = htmlEl.getAttribute('data-theme') || 'dark';
+    setCurrentTheme(initialTheme);
+
+    const observer = new MutationObserver(() => {
+      const updatedTheme = htmlEl.getAttribute('data-theme') || 'dark';
+      setCurrentTheme(updatedTheme);
+    });
+
+    observer.observe(htmlEl, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Preview Drawer Modal state
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsAppTemplate | null>(null);
@@ -417,94 +434,179 @@ export default function MessageTemplatesPage() {
         </div>
       )}
 
-      {isConnected && wabaDetails && (
-        <div className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-4 flex flex-wrap items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <div>
-              <span className="text-zinc-500 font-semibold uppercase tracking-wider block text-[9px]">WABA Account</span>
-              <span className="font-bold text-white mt-0.5 block">{wabaDetails.verifiedName || 'WhatsApp Cloud API'}</span>
-            </div>
-            <div className="h-4 w-px bg-zinc-850 hidden sm:block" />
-            <div className="hidden sm:block">
-              <span className="text-zinc-500 font-semibold uppercase tracking-wider block text-[9px]">Phone Number</span>
-              <span className="font-bold text-zinc-300 mt-0.5 block">{wabaDetails.displayPhoneNumber || 'Connected'}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-zinc-900 border border-zinc-850 px-2.5 py-1 text-[10px] font-semibold text-zinc-400">
-              Tier: <strong className="text-white">{wabaDetails.messagingTier?.replace(/_/g, ' ') || 'Unknown'}</strong>
-            </span>
-            <span className="rounded bg-zinc-900 border border-zinc-850 px-2.5 py-1 text-[10px] font-semibold text-zinc-400">
-              Quality: <strong className="text-white">{wabaDetails.qualityRating || 'UNKNOWN'}</strong>
-            </span>
-            <span className={`rounded border px-2.5 py-1 text-[10px] font-semibold ${wabaDetails.verificationStatus === 'VERIFIED'
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                : 'bg-zinc-900 border-zinc-850 text-zinc-500'
-              }`}>
-              {wabaDetails.verificationStatus || 'UNVERIFIED'}
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="border border-zinc-900 bg-zinc-950/60 p-4 rounded-2xl backdrop-blur-md">
-          <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block">Total Templates</span>
-          <span className="text-2xl font-black text-white mt-1 block">{totalCount}</span>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Templates */}
+        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
+          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-cyan-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Total Templates</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-500/20 bg-cyan-500/5 text-cyan-400">
+              <FileText className="h-4 w-4" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-white mt-2 block metric-glow-cyan">{totalCount}</span>
         </div>
-        <div className="border border-zinc-900 bg-zinc-950/60 p-4 rounded-2xl backdrop-blur-md">
-          <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block">Approved / Active</span>
-          <span className="text-2xl font-black text-emerald-400 mt-1 block">{approvedCount}</span>
+
+        {/* Approved */}
+        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
+          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-emerald-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Approved / Active</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
+              <CheckCircle className="h-4 w-4" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-emerald-400 mt-2 block metric-glow-emerald">{approvedCount}</span>
         </div>
-        <div className="border border-zinc-900 bg-zinc-950/60 p-4 rounded-2xl backdrop-blur-md">
-          <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block">Pending Meta</span>
-          <span className="text-2xl font-black text-amber-500 mt-1 block">{pendingCount}</span>
+
+        {/* Pending */}
+        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
+          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Pending Meta</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-400">
+              <AlertCircle className="h-4 w-4" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-amber-500 mt-2 block metric-glow-orange">{pendingCount}</span>
         </div>
-        <div className="border border-zinc-900 bg-zinc-950/60 p-4 rounded-2xl backdrop-blur-md">
-          <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block">Local Drafts</span>
-          <span className="text-2xl font-black text-zinc-400 mt-1 block">{draftCount}</span>
+
+        {/* Local Drafts */}
+        <div className="group relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-zinc-800">
+          <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-violet-500/10 blur-xl opacity-50 group-hover:opacity-80 transition-all duration-300" />
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider">Local Drafts</span>
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/5 text-violet-400">
+              <FileText className="h-4 w-4" />
+            </div>
+          </div>
+          <span className="text-2xl font-black text-zinc-400 mt-2 block metric-glow-violet">{draftCount}</span>
         </div>
       </div>
 
       {/* Toolbar Filters Panel */}
-      <div className="rounded-2xl border border-zinc-850 bg-zinc-950/70 p-4 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
-        <div className="flex flex-1 flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
-            <input
-              type="text"
-              placeholder="Search by template name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-zinc-850 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-all"
-            />
-          </div>
+      <div className={`rounded-2xl p-4 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs transition-all duration-300 ${
+        currentTheme === 'dark' ? 'border border-transparent bg-transparent' : 'border border-zinc-850 bg-zinc-950/70'
+      }`}>
+        <div className="flex flex-1 flex-col sm:flex-row items-center gap-3">
+          {/* Custom Glowing Neon Search Input for Dark Theme */}
+          {currentTheme === 'dark' ? (
+            <div id="neon-poda" className="shrink-0 scale-90 sm:scale-95 origin-left">
+              <div className="neon-glow"></div>
+              <div className="neon-darkBorderBg"></div>
+              <div className="neon-darkBorderBg"></div>
+              <div className="neon-darkBorderBg"></div>
+              <div className="neon-white"></div>
+              <div className="neon-border"></div>
+              <div id="neon-main">
+                <input
+                  placeholder="Search templates..."
+                  type="text"
+                  name="text"
+                  className="neon-input font-sans"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div id="neon-input-mask"></div>
+                <div id="neon-pink-mask"></div>
+                <div className="neon-filterBorder"></div>
+                <div
+                  id="neon-filter-icon"
+                  onClick={() => setShowFilters(!showFilters)}
+                  title="Toggle Category/Status Filters"
+                >
+                  <svg
+                    preserveAspectRatio="none"
+                    height="27"
+                    width="27"
+                    viewBox="4.8 4.56 14.832 15.408"
+                    fill="none"
+                  >
+                    <path
+                      d="M8.16 6.65002H15.83C16.47 6.65002 16.99 7.17002 16.99 7.81002V9.09002C16.99 9.56002 16.7 10.14 16.41 10.43L13.91 12.64C13.56 12.93 13.33 13.51 13.33 13.98V16.48C13.33 16.83 13.1 17.29 12.81 17.47L12 17.98C11.24 18.45 10.2 17.92 10.2 16.99V13.91C10.2 13.5 9.97 12.98 9.73 12.69L7.52 10.36C7.23 10.08 7 9.55002 7 9.20002V7.87002C7 7.17002 7.52 6.65002 8.16 6.65002Z"
+                      stroke="#d6d6e6"
+                      strokeWidth="1"
+                      strokeMiterlimit="10"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    ></path>
+                  </svg>
+                </div>
+                <div id="neon-search-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    height="24"
+                    fill="none"
+                    className="feather feather-search"
+                  >
+                    <circle stroke="url(#search)" r="8" cy="11" cx="11"></circle>
+                    <line
+                      stroke="url(#searchl)"
+                      y2="16.65"
+                      y1="22"
+                      x2="16.65"
+                      x1="22"
+                    ></line>
+                    <defs>
+                      <linearGradient gradientTransform="rotate(50)" id="search">
+                        <stop stopColor="#f8e7f8" offset="0%"></stop>
+                        <stop stopColor="#b6a9b7" offset="50%"></stop>
+                      </linearGradient>
+                      <linearGradient id="searchl">
+                        <stop stopColor="#b6a9b7" offset="0%"></stop>
+                        <stop stopColor="#837484" offset="50%"></stop>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search by template name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-zinc-850 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-all"
+              />
+            </div>
+          )}
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer"
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="DRAFT">Drafts</option>
-            <option value="PENDING">Pending Approval</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
+          {/* Filters Selectors Dropdowns */}
+          {(showFilters || currentTheme !== 'dark') && (
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="DRAFT">Drafts</option>
+                <option value="PENDING">Pending Approval</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer"
-          >
-            <option value="ALL">All Categories</option>
-            <option value="UTILITY">Utility</option>
-            <option value="MARKETING">Marketing</option>
-            <option value="AUTHENTICATION">Authentication</option>
-          </select>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="rounded-xl border border-zinc-850 bg-zinc-900/40 px-3.5 py-2.5 text-zinc-300 focus:outline-none focus:border-cyan-500 cursor-pointer text-xs"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="UTILITY">Utility</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="AUTHENTICATION">Authentication</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 border-t border-zinc-900 pt-3 md:border-none md:pt-0 shrink-0">
@@ -575,7 +677,12 @@ export default function MessageTemplatesPage() {
           {filteredTemplates.map((t) => (
             <div
               key={t.id}
-              className="group relative rounded-2xl border border-zinc-900 bg-zinc-950/70 p-5 flex flex-col justify-between hover:border-zinc-850 hover:shadow-xl transition-all duration-200 backdrop-blur-md"
+              className={`group relative rounded-2xl border bg-zinc-950/60 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-950/5 backdrop-blur-md ${
+                t.status === 'draft' ? 'border-zinc-900 hover:border-zinc-700' :
+                t.status.toUpperCase() === 'APPROVED' || t.status.toUpperCase() === 'ACTIVE' ? 'border-zinc-900 hover:border-emerald-500/20 hover:shadow-emerald-950/5' :
+                t.status.toUpperCase() === 'PENDING' ? 'border-zinc-900 hover:border-amber-500/20 hover:shadow-amber-950/5' :
+                'border-zinc-900 hover:border-rose-500/20 hover:shadow-rose-950/5'
+              }`}
             >
               <div className="space-y-4">
                 {/* Template Card Top Bar */}
@@ -1271,34 +1378,47 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
   const buttons = list.find((c: any) => c.type === 'BUTTONS');
 
   return (
-    <>
-      {header && (
-        <div className="border-b border-zinc-900 pb-1.5 mb-1.5">
-          <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-0.5">Header ({header.format})</span>
-          <span className="text-white block truncate">{header.format === 'TEXT' ? header.text : `📎 media file`}</span>
+    <div className="bg-[#0b141a] rounded-xl p-3.5 space-y-2 border border-[#202c33]/50 relative overflow-hidden font-sans select-none">
+      {/* Outer wrapper representing the chat view */}
+      <div className="flex flex-col items-start w-full">
+        {/* Message bubble */}
+        <div className="max-w-[90%] bg-[#202c33] rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed">
+          {/* WhatsApp Chat Bubble Tail */}
+          <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-[#202c33] border-l-[8px] border-l-transparent" />
+          
+          {header && (
+            <div className="font-extrabold text-[10px] text-[#00a884] uppercase tracking-wide border-b border-[#2a3942]/60 pb-1 mb-1 font-sans">
+              {header.format === 'TEXT' ? header.text : `📎 ${header.format} Header`}
+            </div>
+          )}
+          
+          {body && (
+            <p className="text-[#e9edef] whitespace-pre-wrap font-normal font-sans">
+              {body.text}
+            </p>
+          )}
+          
+          {footer && (
+            <div className="text-[9px] text-[#8696a0] mt-0.5 font-medium font-sans">
+              {footer.text}
+            </div>
+          )}
         </div>
-      )}
-      {body && (
-        <div className="space-y-0.5">
-          <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest">Message Body</span>
-          <p className="text-zinc-300 font-sans text-[11px] leading-relaxed whitespace-pre-wrap">{body.text}</p>
-        </div>
-      )}
-      {footer && (
-        <div className="border-t border-zinc-900/60 pt-1.5 mt-1.5">
-          <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-0.5">Footer</span>
-          <span className="text-zinc-500 text-[10px]">{footer.text}</span>
-        </div>
-      )}
-      {buttons && buttons.buttons && buttons.buttons.length > 0 && (
-        <div className="border-t border-zinc-900/60 pt-1.5 mt-1.5 flex flex-wrap gap-1">
-          {buttons.buttons.map((b: any, idx: number) => (
-            <span key={idx} className="rounded bg-zinc-900 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-400 border border-zinc-850">
-              {b.text}
-            </span>
-          ))}
-        </div>
-      )}
-    </>
+
+        {/* Buttons list rendered underneath message bubble like real interactive templates */}
+        {buttons && buttons.buttons && buttons.buttons.length > 0 && (
+          <div className="space-y-1 mt-1.5 w-[90%] max-w-xs pl-2">
+            {buttons.buttons.map((b: any, idx: number) => (
+              <div
+                key={idx}
+                className="w-full bg-[#202c33]/90 hover:bg-[#202c33] border border-[#2a3942] rounded-lg py-1.5 px-3 text-[10px] text-[#00a884] font-bold text-center flex items-center justify-center gap-1 shadow-sm transition-all duration-150"
+              >
+                {b.text}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
