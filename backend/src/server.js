@@ -26,11 +26,11 @@ const allowedOrigins = process.env.FRONTEND_URL
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log(`🔒 CORS origin request: "${origin}" | Allowed:`, allowedOrigins);
-      // Allow requests with no origin (like mobile apps, curl, postman)
+      // Allow requests with no origin (like mobile apps, curl, postman, webhooks)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`🔒 CORS Blocked: Request origin "${origin}" is not allowed. Allowed:`, allowedOrigins);
         callback(new Error("Not allowed by CORS"));
       }
     },
