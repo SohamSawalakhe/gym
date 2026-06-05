@@ -236,7 +236,10 @@ router.post(
     const { wabaId, phoneNumberId, accessToken, businessId } = req.body;
     const { gymSlug } = req.params;
 
+    console.log(`🔌 [Manual Connect] Connection requested for Gym Slug: "${gymSlug}" | Phone ID: ${phoneNumberId} | WABA ID: ${wabaId}`);
+
     if (!wabaId || !phoneNumberId || !accessToken) {
+      console.warn("⚠️ [Manual Connect] Request failed validation: missing WABA ID, Phone ID, or Access Token.");
       return res.status(400).json({
         error: "WABA ID, Phone Number ID, and Access Token are required",
       });
@@ -248,18 +251,24 @@ router.post(
       });
 
       if (!gym) {
+        console.warn(`⚠️ [Manual Connect] Gym not found for slug: ${gymSlug}`);
         return res.status(404).json({ error: "Gym not found" });
       }
 
       // 1️⃣ Validate credentials with Meta API
+      console.log(`🔌 [Manual Connect] Verifying credentials for Phone ID: ${phoneNumberId} on Meta...`);
       const phoneData = await fetchPhoneDetails(phoneNumberId, accessToken);
+      console.log(`🔌 [Manual Connect] Meta response phoneData:`, JSON.stringify(phoneData));
+
       const whatsappVerificationStatus = phoneData?.code_verification_status || "NOT_VERIFIED";
       const whatsappQualityRating = phoneData?.quality_rating || "UNKNOWN";
       const whatsappVerifiedName = phoneData?.verified_name || null;
       const whatsappDisplayPhoneNumber = phoneData?.display_phone_number || null;
 
       // 2️⃣ Fetch Limit Tier
+      console.log(`🔌 [Manual Connect] Fetching messaging tier for WABA: ${wabaId}...`);
       const whatsappMessagingTier = await fetchMessagingTier(wabaId, phoneNumberId, accessToken);
+      console.log(`🔌 [Manual Connect] Messaging tier fetched: ${whatsappMessagingTier}`);
 
       // 3️⃣ Attempt to Register Phone Number
       const isTestNumber =
@@ -268,18 +277,24 @@ router.post(
       const isAlreadyCloudAPI = phoneData?.platform_type === "CLOUD_API";
 
       if (!isTestNumber && !isAlreadyCloudAPI) {
+        console.log(`🔌 [Manual Connect] Attempting registerPhoneNumber for Phone ID: ${phoneNumberId}...`);
         const registration = await registerPhoneNumber(phoneNumberId, accessToken);
         if (!registration.success) {
+          console.error(`❌ [Manual Connect] Phone number registration failed:`, registration.error);
           return res.status(400).json({
             error: "Phone number registration failed",
             metaError: registration.error,
           });
         }
+      } else {
+        console.log(`🔌 [Manual Connect] Skipping line registration (Is Test: ${isTestNumber}, Is CloudAPI: ${isAlreadyCloudAPI})`);
       }
 
       // 4️⃣ Attempt to Subscribe App
+      console.log(`🔌 [Manual Connect] Subscribing Facebook App to WABA: ${wabaId}...`);
       const subscription = await subscribeApp(wabaId, accessToken);
       if (!subscription.success) {
+        console.error(`❌ [Manual Connect] Webhook subscription failed:`, subscription.error);
         return res.status(400).json({
           error: "Webhook subscription failed",
           metaError: subscription.error,
@@ -287,6 +302,7 @@ router.post(
       }
 
       // 5️⃣ Encrypt token & save
+      console.log(`💾 [Manual Connect] Encrypting access token & saving details to DB for Gym: "${gym.name}"`);
       const encryptedToken = encrypt(accessToken);
 
       await prisma.gym.update({
@@ -308,12 +324,13 @@ router.post(
         },
       });
 
+      console.log(`✅ [Manual Connect] Successfully connected WhatsApp for gym: ${gymSlug}`);
       res.json({
         success: true,
         message: "WhatsApp successfully connected manually",
       });
     } catch (err) {
-      console.error("Manual connect error:", err);
+      console.error("❌ [Manual Connect] Error:", err);
       res.status(400).json({ error: err.message || "Manual setup connection failed" });
     }
   }
@@ -333,7 +350,10 @@ router.post(
     const { code, wabaId, phoneNumberId, businessId } = req.body;
     const { gymSlug } = req.params;
 
+    console.log(`🔌 [Embedded Setup] Request received for Gym Slug: "${gymSlug}" | Phone ID: ${phoneNumberId} | WABA ID: ${wabaId}`);
+
     if (!code || !wabaId || !phoneNumberId) {
+      console.warn("⚠️ [Embedded Setup] Request failed validation: missing OAuth code, WABA ID, or Phone ID.");
       return res.status(400).json({ error: "Missing required embedded signup data" });
     }
 
@@ -343,6 +363,7 @@ router.post(
       });
 
       if (!gym) {
+        console.warn(`⚠️ [Embedded Setup] Gym not found for slug: ${gymSlug}`);
         return res.status(404).json({ error: "Gym not found" });
       }
 
@@ -350,10 +371,12 @@ router.post(
       const appSecret = process.env.FACEBOOK_APP_SECRET;
 
       if (!appId || !appSecret) {
+        console.error("❌ [Embedded Setup] Facebook App Credentials missing in environment variables!");
         return res.status(500).json({ error: "Meta App settings missing on backend server" });
       }
 
       // 1️⃣ Exchange code for token
+      console.log(`🔌 [Embedded Setup] Exchanging OAuth code for Meta access token...`);
       const qs = new URLSearchParams({
         client_id: appId,
         client_secret: appSecret,
@@ -366,6 +389,7 @@ router.post(
       const tokenData = await tokenResp.json();
 
       if (!tokenResp.ok || !tokenData.access_token) {
+        console.error(`❌ [Embedded Setup] OAuth token exchange failed:`, tokenData);
         return res.status(400).json({
           error: "OAuth token exchange failed",
           metaError: tokenData,
@@ -373,16 +397,22 @@ router.post(
       }
 
       const accessToken = tokenData.access_token;
+      console.log("🔌 [Embedded Setup] OAuth token exchange successful.");
 
       // 2️⃣ Fetch details
+      console.log(`🔌 [Embedded Setup] Fetching phone details for Phone ID: ${phoneNumberId}...`);
       const phoneData = await fetchPhoneDetails(phoneNumberId, accessToken);
+      console.log(`🔌 [Embedded Setup] Phone details data:`, JSON.stringify(phoneData));
+
       const whatsappVerificationStatus = phoneData?.code_verification_status || "NOT_VERIFIED";
       const whatsappQualityRating = phoneData?.quality_rating || "UNKNOWN";
       const whatsappVerifiedName = phoneData?.verified_name || null;
       const whatsappDisplayPhoneNumber = phoneData?.display_phone_number || null;
 
       // 3️⃣ Fetch Tier
+      console.log(`🔌 [Embedded Setup] Fetching messaging limit tier for WABA: ${wabaId}...`);
       const whatsappMessagingTier = await fetchMessagingTier(wabaId, phoneNumberId, accessToken);
+      console.log(`🔌 [Embedded Setup] Messaging tier fetched: ${whatsappMessagingTier}`);
 
       // 4️⃣ Attempt to Register
       const isTestNumber =
@@ -391,8 +421,10 @@ router.post(
       const isAlreadyCloudAPI = phoneData?.platform_type === "CLOUD_API";
 
       if (!isTestNumber && !isAlreadyCloudAPI) {
+        console.log(`🔌 [Embedded Setup] Attempting registerPhoneNumber for Phone ID: ${phoneNumberId}...`);
         const registration = await registerPhoneNumber(phoneNumberId, accessToken);
         if (!registration.success) {
+          console.error("❌ [Embedded Setup] Phone number registration failed:", registration.error);
           await prisma.gym.update({
             where: { id: gym.id },
             data: {
@@ -406,11 +438,15 @@ router.post(
             metaError: registration.error,
           });
         }
+      } else {
+        console.log(`🔌 [Embedded Setup] Skipping line registration (Is Test: ${isTestNumber}, Is CloudAPI: ${isAlreadyCloudAPI})`);
       }
 
       // 5️⃣ Subscribe App
+      console.log(`🔌 [Embedded Setup] Subscribing Facebook App to WABA: ${wabaId}...`);
       const subscription = await subscribeApp(wabaId, accessToken);
       if (!subscription.success) {
+        console.error("❌ [Embedded Setup] Webhook app subscription failed:", subscription.error);
         await prisma.gym.update({
           where: { id: gym.id },
           data: {
@@ -426,6 +462,7 @@ router.post(
       }
 
       // 6️⃣ Encrypt token & save
+      console.log(`💾 [Embedded Setup] Encrypting access token & saving connection details for Gym: "${gym.name}"`);
       const encryptedToken = encrypt(accessToken);
 
       await prisma.gym.update({
@@ -447,9 +484,10 @@ router.post(
         },
       });
 
+      console.log(`✅ [Embedded Setup] Successfully completed embedded signup for Gym: ${gymSlug}`);
       res.json({ success: true });
     } catch (err) {
-      console.error("Embedded signup error:", err);
+      console.error("❌ [Embedded Setup] Error:", err);
       res.status(400).json({ error: err.message || "Embedded signup failed" });
     }
   }
@@ -467,6 +505,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { gymSlug } = req.params;
+    console.log(`🔌 [Disconnect] Request received for Gym Slug: "${gymSlug}"`);
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -474,9 +513,11 @@ router.post(
       });
 
       if (!gym) {
+        console.warn(`⚠️ [Disconnect] Gym not found for slug: ${gymSlug}`);
         return res.status(404).json({ error: "Gym not found" });
       }
 
+      console.log(`💾 [Disconnect] Clearing WhatsApp configuration for Gym: "${gym.name}"`);
       await prisma.gym.update({
         where: { id: gym.id },
         data: {
@@ -496,9 +537,10 @@ router.post(
         },
       });
 
+      console.log(`✅ [Disconnect] Successfully disconnected WhatsApp for Gym: "${gym.slug}"`);
       res.json({ success: true, message: "WhatsApp successfully disconnected" });
     } catch (err) {
-      console.error("Disconnect error:", err);
+      console.error("❌ [Disconnect] Error:", err);
       res.status(500).json({ error: "Failed to disconnect WhatsApp" });
     }
   }
@@ -516,6 +558,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { gymSlug } = req.params;
+    console.log(`🔌 [Refresh Status] Refresh requested for Gym: "${gymSlug}"`);
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -523,6 +566,7 @@ router.post(
       });
 
       if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        console.warn(`⚠️ [Refresh Status] Gym "${gymSlug}" is not fully configured for WhatsApp.`);
         return res.status(400).json({ error: "WhatsApp not fully configured" });
       }
 
@@ -531,7 +575,10 @@ router.post(
       const wabaId = gym.whatsapp_waba_id || gym.whatsapp_business_id;
 
       // 1️⃣ Fetch Details
+      console.log(`🔌 [Refresh Status] Fetching phone details from Meta for Phone ID: ${phoneNumberId}...`);
       const phoneData = await fetchPhoneDetails(phoneNumberId, accessToken);
+      console.log(`🔌 [Refresh Status] Phone details response:`, JSON.stringify(phoneData));
+
       const whatsappVerificationStatus = phoneData?.code_verification_status || "NOT_VERIFIED";
       const whatsappQualityRating = phoneData?.quality_rating || "UNKNOWN";
       const whatsappVerifiedName = phoneData?.verified_name || null;
@@ -540,9 +587,12 @@ router.post(
       // 2️⃣ Fetch Tier
       let whatsappMessagingTier = gym.whatsappMessagingTier || "UNKNOWN";
       if (wabaId) {
+        console.log(`🔌 [Refresh Status] Fetching messaging limit tier for WABA: ${wabaId}...`);
         whatsappMessagingTier = await fetchMessagingTier(wabaId, phoneNumberId, accessToken);
+        console.log(`🔌 [Refresh Status] Limit tier: ${whatsappMessagingTier}`);
       }
 
+      console.log(`💾 [Refresh Status] Updating Gym details in DB for slug: ${gymSlug}`);
       const updated = await prisma.gym.update({
         where: { id: gym.id },
         data: {
@@ -562,9 +612,10 @@ router.post(
         },
       });
 
+      console.log(`✅ [Refresh Status] WhatsApp status refreshed successfully for Gym: "${gymSlug}"`);
       res.json(updated);
     } catch (err) {
-      console.error("Refresh status error:", err);
+      console.error("❌ [Refresh Status] Error:", err);
       res.status(400).json({ error: err.message || "Failed to refresh WhatsApp status" });
     }
   }
@@ -582,6 +633,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { gymSlug } = req.params;
+    console.log(`🔌 [Reverify] Re-verification requested for Gym: "${gymSlug}"`);
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -589,6 +641,7 @@ router.post(
       });
 
       if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        console.warn(`⚠️ [Reverify] Gym "${gymSlug}" is not configured for WhatsApp.`);
         return res.status(400).json({ error: "WhatsApp not fully configured" });
       }
 
@@ -596,12 +649,14 @@ router.post(
       const phoneNumberId = gym.whatsapp_phone_number_id;
 
       // Retries registration
+      console.log(`🔌 [Reverify] Retrying registerPhoneNumber for Phone ID: ${phoneNumberId}...`);
       const registration = await registerPhoneNumber(phoneNumberId, accessToken);
 
       if (!registration.success) {
         const errCode = registration.error?.error?.code;
         const isTokenExpired = errCode === 190 || errCode === 463;
 
+        console.error(`❌ [Reverify] Phone line registration retry failed. Code: ${errCode}`, registration.error);
         return res.status(400).json({
           error: isTokenExpired
             ? "Your Meta access token has expired. Please reconfigure the connection."
@@ -611,12 +666,16 @@ router.post(
       }
 
       // Sync Health Status
+      console.log(`🔌 [Reverify] Fetching updated phone details from Meta...`);
       const phoneData = await fetchPhoneDetails(phoneNumberId, accessToken);
+      console.log(`🔌 [Reverify] Phone details:`, JSON.stringify(phoneData));
+
       const whatsappVerificationStatus = phoneData?.code_verification_status || "NOT_VERIFIED";
       const whatsappQualityRating = phoneData?.quality_rating || "UNKNOWN";
       const whatsappVerifiedName = phoneData?.verified_name || null;
       const whatsappDisplayPhoneNumber = phoneData?.display_phone_number || null;
 
+      console.log(`💾 [Reverify] Updating Gym details in DB for Gym: "${gymSlug}"`);
       const updated = await prisma.gym.update({
         where: { id: gym.id },
         data: {
@@ -627,9 +686,10 @@ router.post(
         },
       });
 
+      console.log(`✅ [Reverify] Reverify successful for Gym: "${gymSlug}"`);
       res.json(updated);
     } catch (err) {
-      console.error("Reverify error:", err);
+      console.error("❌ [Reverify] Error:", err);
       res.status(400).json({ error: err.message || "Reverify registration failed" });
     }
   }
@@ -647,6 +707,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { gymSlug } = req.params;
+    console.log(`🔌 [Register Code] Requesting registration code for Gym: "${gymSlug}" via ${DEFAULT_CODE_METHOD}`);
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -654,12 +715,14 @@ router.post(
       });
 
       if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        console.warn(`⚠️ [Register Code] Gym "${gymSlug}" lacks required configuration.`);
         return res.status(400).json({ error: "WhatsApp not fully configured" });
       }
 
       const accessToken = decrypt(gym.whatsapp_access_token);
       const phoneNumberId = gym.whatsapp_phone_number_id;
 
+      console.log(`🔌 [Register Code] Sending code request to Meta for Phone ID: ${phoneNumberId}...`);
       const resp = await fetch(
         `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/request_code`,
         {
@@ -679,15 +742,17 @@ router.post(
       const data = await resp.json();
 
       if (!resp.ok) {
+        console.error(`❌ [Register Code] Request failed:`, data);
         return res.status(400).json({
           error: "Failed to request verification code",
           metaError: data?.error || data,
         });
       }
 
+      console.log(`✅ [Register Code] Successfully requested validation code from Meta.`);
       res.json({ success: true, message: `Verification code requested via ${DEFAULT_CODE_METHOD}` });
     } catch (err) {
-      console.error("Request code error:", err);
+      console.error("❌ [Register Code] Error:", err);
       res.status(400).json({ error: err.message || "Failed to request verification code" });
     }
   }
@@ -707,7 +772,10 @@ router.post(
     const { code } = req.body;
     const { gymSlug } = req.params;
 
+    console.log(`🔌 [Verify Code] Verification code validation submitted for Gym: "${gymSlug}"`);
+
     if (!code) {
+      console.warn("⚠️ [Verify Code] Validation code missing in request body.");
       return res.status(400).json({ error: "Verification code is required" });
     }
 
@@ -717,6 +785,7 @@ router.post(
       });
 
       if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_phone_number_id) {
+        console.warn(`⚠️ [Verify Code] Gym "${gymSlug}" lacks required configuration.`);
         return res.status(400).json({ error: "WhatsApp not fully configured" });
       }
 
@@ -724,6 +793,7 @@ router.post(
       const phoneNumberId = gym.whatsapp_phone_number_id;
 
       // 1️⃣ Verify the code
+      console.log(`🔌 [Verify Code] Sending code verification request to Meta for Phone ID: ${phoneNumberId}...`);
       const verifyResp = await fetch(
         `${GRAPH_BASE_URL}/${META_API_VERSION}/${phoneNumberId}/verify_code`,
         {
@@ -741,15 +811,19 @@ router.post(
       const verifyData = await verifyResp.json();
 
       if (!verifyResp.ok) {
+        console.error("❌ [Verify Code] Meta code verification failed:", verifyData);
         return res.status(400).json({
           error: "Verification failed",
           metaError: verifyData?.error || verifyData,
         });
       }
+      console.log("🔌 [Verify Code] Meta code verification succeeded.");
 
       // 2️⃣ Register phone line
+      console.log(`🔌 [Verify Code] Attempting registerPhoneNumber for Phone ID: ${phoneNumberId}...`);
       const registration = await registerPhoneNumber(phoneNumberId, accessToken);
       if (!registration.success) {
+        console.error("❌ [Verify Code] Registration step failed:", registration.error);
         return res.status(400).json({
           error: "Code verified but registration failed",
           metaError: registration.error,
@@ -757,9 +831,11 @@ router.post(
       }
 
       // 3️⃣ Refresh Gym record
+      console.log("🔌 [Verify Code] Fetching final phone status from Meta...");
       const phoneData = await fetchPhoneDetails(phoneNumberId, accessToken);
       const whatsappVerificationStatus = phoneData?.code_verification_status || "VERIFIED";
 
+      console.log(`💾 [Verify Code] Saving verified status to DB for Gym: "${gymSlug}"`);
       const updated = await prisma.gym.update({
         where: { id: gym.id },
         data: {
@@ -770,9 +846,10 @@ router.post(
         },
       });
 
+      console.log(`✅ [Verify Code] Successfully verified and connected WhatsApp for Gym: "${gymSlug}"`);
       res.json(updated);
     } catch (err) {
-      console.error("Verify code error:", err);
+      console.error("❌ [Verify Code] Error:", err);
       res.status(400).json({ error: err.message || "Verification failed" });
     }
   }
@@ -790,6 +867,7 @@ router.post(
   requireRoles(["GYM_OWNER", "SUPERADMIN"]),
   async (req, res) => {
     const { gymSlug } = req.params;
+    console.log(`🔌 [Sync Templates] Template synchronization requested for Gym: "${gymSlug}"`);
 
     try {
       const gym = await prisma.gym.findUnique({
@@ -797,12 +875,14 @@ router.post(
       });
 
       if (!gym || !gym.whatsapp_access_token || !gym.whatsapp_waba_id) {
+        console.warn(`⚠️ [Sync Templates] Gym "${gymSlug}" is not configured for WhatsApp.`);
         return res.status(400).json({ error: "WhatsApp not fully configured" });
       }
 
       const accessToken = decrypt(gym.whatsapp_access_token);
       const wabaId = gym.whatsapp_waba_id;
 
+      console.log(`🔌 [Sync Templates] Fetching templates from Meta for WABA: ${wabaId}...`);
       const resp = await fetch(
         `${GRAPH_BASE_URL}/${META_API_VERSION}/${wabaId}/message_templates?limit=100`,
         {
@@ -815,6 +895,7 @@ router.post(
       const data = await resp.json();
 
       if (!resp.ok) {
+        console.error(`❌ [Sync Templates] Failed to fetch templates from Meta:`, data);
         return res.status(400).json({
           error: "Failed to fetch templates from Meta",
           metaError: data,
@@ -822,6 +903,7 @@ router.post(
       }
 
       if (data && Array.isArray(data.data)) {
+        console.log(`🔌 [Sync Templates] Fetched ${data.data.length} templates. Upserting to local database...`);
         for (const metaTpl of data.data) {
           await prisma.whatsAppTemplate.upsert({
             where: {
@@ -848,11 +930,12 @@ router.post(
             },
           });
         }
+        console.log(`💾 [Sync Templates] Database synchronization of templates complete.`);
       }
 
       res.json({ success: true, message: "Templates synchronized successfully" });
     } catch (err) {
-      console.error("Template sync error:", err);
+      console.error("❌ [Sync Templates] Error:", err);
       res.status(400).json({ error: err.message || "Failed to synchronize templates" });
     }
   }

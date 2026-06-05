@@ -40,15 +40,23 @@ router.post("/", async (req, res) => {
   res.sendStatus(200);
 
   try {
+    console.log("📥 Received Webhook Event Raw Body:", JSON.stringify(body, null, 2));
+
     const entry = body.entry?.[0];
     const change = entry?.changes?.[0];
     const value = change?.value;
 
-    if (!value) return;
+    if (!value) {
+      console.log("ℹ️ Webhook payload ignored (no 'value' object found).");
+      return;
+    }
 
     // Resolve matching Gym tenant by Meta Phone Number ID
     const phoneNumberId = value.metadata?.phone_number_id;
-    if (!phoneNumberId) return;
+    if (!phoneNumberId) {
+      console.log("ℹ️ Webhook payload ignored (no 'phone_number_id' in metadata).");
+      return;
+    }
 
     const gym = await prisma.gym.findFirst({
       where: { whatsapp_phone_number_id: phoneNumberId },
@@ -59,10 +67,13 @@ router.post("/", async (req, res) => {
       return;
     }
 
+    console.log(`🏢 Resolved Gym Tenant: "${gym.name}" (Slug: ${gym.slug}) for Phone ID: ${phoneNumberId}`);
+
     /* =====================================================
        1. CUSTOMER MESSAGES (INBOUND)
        ===================================================== */
     if (value.messages?.length) {
+      console.log(`💬 Processing ${value.messages.length} inbound message(s)...`);
       for (const msg of value.messages) {
         const messageId = msg.id;
         const senderPhone = msg.from;
@@ -80,6 +91,8 @@ router.post("/", async (req, res) => {
         } else {
           text = `[${msg.type} message]`;
         }
+
+        console.log(`📥 Message: "${text}" from ${senderPhone} to display # ${recipientPhone} (ID: ${messageId})`);
 
         // Check for duplicate messages (idempotency check)
         const exists = await prisma.whatsAppMessage.findUnique({
@@ -99,14 +112,18 @@ router.post("/", async (req, res) => {
               status: "RECEIVED",
             },
           });
+          console.log(`💾 Saved inbound message to database: ${messageId}`);
 
           // Trigger WebSocket realtime update (if active)
           try {
             const io = getIO();
             io.to(`gym:${gym.id}`).emit("whatsapp:message", incomingMessage);
+            console.log(`🔌 Emitted websocket event "whatsapp:message" for Gym ID: ${gym.id}`);
           } catch (wsErr) {
-            console.error("Failed to emit WhatsApp WebSocket event:", wsErr.message);
+            console.error("❌ Failed to emit WhatsApp WebSocket event:", wsErr.message);
           }
+        } else {
+          console.log(`ℹ️ Duplicate message detected (ID: ${messageId}), skipping database insert.`);
         }
       }
     }
@@ -115,11 +132,14 @@ router.post("/", async (req, res) => {
        2. STATUS UPDATES (OUTBOUND DELIVERIES)
        ===================================================== */
     if (value.statuses?.length) {
+      console.log(`📊 Processing ${value.statuses.length} status update(s)...`);
       for (const statusObj of value.statuses) {
         const messageId = statusObj.id;
         const metaState = statusObj.status; // sent | delivered | read | failed
         const errorCode = statusObj.errors?.[0]?.code;
         const errorMessage = statusObj.errors?.[0]?.message || null;
+
+        console.log(`📈 Outbound Status ID: ${messageId} -> State: "${metaState}" (ErrorCode: ${errorCode || "none"})`);
 
         // Try to update existing database message status
         const message = await prisma.whatsAppMessage.findUnique({
@@ -134,6 +154,9 @@ router.post("/", async (req, res) => {
               errorMessage: errorMessage || null,
             },
           });
+          console.log(`💾 Updated status in DB for message ${messageId} to ${metaState.toUpperCase()}`);
+        } else {
+          console.log(`⚠️ No matching outbound message found in DB for Status ID: ${messageId}`);
         }
 
         // Always log raw event for auditing
@@ -145,6 +168,7 @@ router.post("/", async (req, res) => {
             rawPayload: statusObj,
           },
         });
+        console.log(`💾 Logged raw WhatsApp event for message ID: ${messageId}`);
 
         // Trigger WebSocket updates for status changes
         if (message) {
@@ -156,7 +180,10 @@ router.post("/", async (req, res) => {
               errorCode,
               errorMessage,
             });
-          } catch (wsErr) {}
+            console.log(`🔌 Emitted websocket event "whatsapp:status" for Gym ID: ${gym.id}`);
+          } catch (wsErr) {
+            console.error("❌ Failed to emit status update WebSocket event:", wsErr.message);
+          }
         }
       }
     }

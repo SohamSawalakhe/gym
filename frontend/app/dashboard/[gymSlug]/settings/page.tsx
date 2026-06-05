@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Smartphone,
@@ -34,6 +35,20 @@ declare global {
 
 export default function WhatsAppSetupPage() {
   const { gymSlug } = useParams() as { gymSlug: string };
+
+  // Helper to extract nested Meta errors
+  async function parseError(res: Response, defaultMessage: string): Promise<string> {
+    try {
+      const data = await res.json();
+      const metaMessage = data.metaError?.error?.message || data.metaError?.message;
+      if (metaMessage) {
+        return `${data.error || defaultMessage} — ${metaMessage}`;
+      }
+      return data.error || defaultMessage;
+    } catch {
+      return defaultMessage;
+    }
+  }
 
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -233,9 +248,9 @@ export default function WhatsAppSetupPage() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Setup connection failed.");
+        const errorMsg = await parseError(res, "Setup connection failed.");
+        throw new Error(errorMsg);
       }
 
       toast.success("WhatsApp configuration updated successfully");
@@ -263,7 +278,8 @@ export default function WhatsAppSetupPage() {
         method: "POST",
       });
       if (!res.ok) {
-        throw new Error("Failed to disconnect.");
+        const errorMsg = await parseError(res, "Failed to disconnect.");
+        throw new Error(errorMsg);
       }
       toast.success("WhatsApp disconnected successfully");
       setIsEditing(false);
@@ -283,9 +299,9 @@ export default function WhatsAppSetupPage() {
       const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/refresh-status`, {
         method: "POST",
       });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to sync status");
+        const errorMsg = await parseError(res, "Failed to sync status");
+        throw new Error(errorMsg);
       }
       await loadStatus();
       toast.success("WhatsApp health status synced with Meta");
@@ -302,6 +318,10 @@ export default function WhatsAppSetupPage() {
       const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/reverify`, {
         method: "POST",
       });
+      if (!res.ok) {
+        const errorMsg = await parseError(res, "Re-verification failed");
+        throw new Error(errorMsg);
+      }
       const data = await res.json();
 
       if (data.whatsappVerificationStatus === "VERIFIED") {
@@ -309,9 +329,14 @@ export default function WhatsAppSetupPage() {
         setShowCodeInput(false);
         await loadStatus();
       } else {
-        await fetch(`/api/dashboard/${gymSlug}/whatsapp/register`, {
+        console.log("☎️ Registration retry requested. Initiating Meta request_code...");
+        const regRes = await fetch(`/api/dashboard/${gymSlug}/whatsapp/register`, {
           method: "POST",
         });
+        if (!regRes.ok) {
+          const regErrorMsg = await parseError(regRes, "Failed to request verification code");
+          throw new Error(regErrorMsg);
+        }
         setShowCodeInput(true);
         toast.info("A verification code has been sent to your WhatsApp number.");
       }
@@ -334,9 +359,9 @@ export default function WhatsAppSetupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: verificationCode }),
       });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Verification code check failed.");
+        const errorMsg = await parseError(res, "Verification code check failed.");
+        throw new Error(errorMsg);
       }
       setShowCodeInput(false);
       setVerificationCode("");
@@ -357,9 +382,9 @@ export default function WhatsAppSetupPage() {
       const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/sync-templates`, {
         method: "POST",
       });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Template sync failed.");
+        const errorMsg = await parseError(res, "Template sync failed.");
+        throw new Error(errorMsg);
       }
       await loadStatus();
       toast.success("Templates synchronized successfully!");
@@ -411,6 +436,7 @@ export default function WhatsAppSetupPage() {
             setSaving(false);
             setSetupStep(null);
             setError("Failed to receive WhatsApp account details from Meta");
+            toast.error("Failed to receive WhatsApp account details from Meta");
             return;
           }
 
@@ -427,9 +453,9 @@ export default function WhatsAppSetupPage() {
               }),
             });
 
-            const data = await res.json();
             if (!res.ok) {
-              throw new Error(data.error || "Embedded setup failed");
+              const errorMsg = await parseError(res, "Embedded setup failed");
+              throw new Error(errorMsg);
             }
 
             toast.success("WhatsApp connected successfully");
@@ -437,6 +463,7 @@ export default function WhatsAppSetupPage() {
             await loadStatus();
           } catch (err: any) {
             setError(err.message || "Embedded signup failed");
+            toast.error(err.message || "Embedded signup failed");
           } finally {
             setSaving(false);
             setSetupStep(null);
@@ -1159,6 +1186,7 @@ export default function WhatsAppSetupPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <ToastContainer theme="dark" position="bottom-right" />
     </div>
   );
 }
