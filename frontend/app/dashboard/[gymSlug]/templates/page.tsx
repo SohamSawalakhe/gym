@@ -674,18 +674,13 @@ export default function MessageTemplatesPage() {
           {filteredTemplates.map((t) => (
             <div
               key={t.id}
-              className={`group relative rounded-2xl border bg-zinc-950/60 p-5 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-950/5 backdrop-blur-md ${
-                t.status === 'draft' ? 'border-zinc-900 hover:border-zinc-700' :
-                t.status.toUpperCase() === 'APPROVED' || t.status.toUpperCase() === 'ACTIVE' ? 'border-zinc-900 hover:border-emerald-500/20 hover:shadow-emerald-950/5' :
-                t.status.toUpperCase() === 'PENDING' ? 'border-zinc-900 hover:border-amber-500/20 hover:shadow-amber-950/5' :
-                'border-zinc-900 hover:border-rose-500/20 hover:shadow-rose-950/5'
-              }`}
+              className="group relative rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 flex flex-col justify-between backdrop-blur-md"
             >
               <div className="space-y-4">
                 {/* Template Card Top Bar */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-0.5 overflow-hidden">
-                    <span className="font-extrabold text-sm text-white block truncate tracking-tight group-hover:text-cyan-400 transition-colors">
+                    <span className="font-extrabold text-sm text-white block truncate tracking-tight">
                       {t.templateName}
                     </span>
                     <div className="flex flex-wrap gap-1.5 items-center mt-1">
@@ -711,9 +706,7 @@ export default function MessageTemplatesPage() {
                 </div>
 
                 {/* Content Details Preview Block */}
-                <div className="rounded-xl border border-zinc-900/80 bg-zinc-900/20 p-3.5 space-y-2 text-[11px] leading-relaxed text-zinc-400 max-h-[140px] overflow-y-auto font-mono scrollbar-thin">
-                  {renderComponentSummary(t.components)}
-                </div>
+                {renderComponentSummary(t.components)}
               </div>
 
               {/* Template Card Bottom Actions Bar */}
@@ -1412,28 +1405,28 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
   const buttons = list.find((c: any) => c.type === 'BUTTONS');
 
   return (
-    <div className="bg-[#0b141a] rounded-xl p-3.5 space-y-2 border border-[#202c33]/50 relative overflow-hidden font-sans select-none">
+    <div className="bg-[#0b141a] rounded-xl p-3.5 border border-[#202c33]/50 relative overflow-hidden font-sans select-none h-[170px] max-h-[170px] flex flex-col justify-between">
       {/* Outer wrapper representing the chat view */}
-      <div className="flex flex-col items-start w-full">
+      <div className="flex flex-col items-start w-full overflow-hidden">
         {/* Message bubble */}
-        <div className="max-w-[90%] bg-[#202c33] rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed">
+        <div className="w-[90%] max-w-[90%] bg-[#202c33] rounded-2xl rounded-tl-none p-3 shadow-md space-y-1 relative text-[11px] leading-relaxed">
           {/* WhatsApp Chat Bubble Tail */}
           <div className="absolute top-0 -left-1.5 w-0 h-0 border-t-[8px] border-t-[#202c33] border-l-[8px] border-l-transparent" />
           
           {header && (
-            <div className="font-extrabold text-[10px] text-[#00a884] uppercase tracking-wide border-b border-[#2a3942]/60 pb-1 mb-1 font-sans">
+            <div className="font-extrabold text-[10px] text-[#00a884] uppercase tracking-wide border-b border-[#2a3942]/60 pb-1 mb-1 font-sans truncate">
               {header.format === 'TEXT' ? header.text : `📎 ${header.format} Header`}
             </div>
           )}
           
           {body && (
-            <p className="text-[#e9edef] whitespace-pre-wrap font-normal font-sans">
+            <p className="text-[#e9edef] whitespace-pre-wrap font-normal font-sans line-clamp-3">
               {body.text}
             </p>
           )}
           
           {footer && (
-            <div className="text-[9px] text-[#8696a0] mt-0.5 font-medium font-sans">
+            <div className="text-[9px] text-[#8696a0] mt-0.5 font-medium font-sans truncate">
               {footer.text}
             </div>
           )}
@@ -1442,10 +1435,10 @@ function renderComponentSummary(componentsJson: any): React.ReactNode {
         {/* Buttons list rendered underneath message bubble like real interactive templates */}
         {buttons && buttons.buttons && buttons.buttons.length > 0 && (
           <div className="space-y-1 mt-1.5 w-[90%] max-w-xs pl-2">
-            {buttons.buttons.map((b: any, idx: number) => (
+            {buttons.buttons.slice(0, 2).map((b: any, idx: number) => (
               <div
                 key={idx}
-                className="w-full bg-[#202c33]/90 hover:bg-[#202c33] border border-[#2a3942] rounded-lg py-1.5 px-3 text-[10px] text-[#00a884] font-bold text-center flex items-center justify-center gap-1 shadow-sm transition-all duration-150"
+                className="w-full bg-[#202c33]/90 border border-[#2a3942] rounded-lg py-1 px-3 text-[10px] text-[#00a884] font-bold text-center flex items-center justify-center gap-1 shadow-sm truncate"
               >
                 {b.text}
               </div>
