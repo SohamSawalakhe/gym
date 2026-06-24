@@ -634,7 +634,7 @@ export default function MessageBubble({
                         )}
                       </div>
                       <span className="text-[11px] font-medium text-white/90 bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-[2px] select-none">
-                        {isDownloadingMedia ? `Loading... ${Math.round(downloadProgress)}%` : getStableMockSize(msg.whatsappMessageId || msg.id, "image")}
+                        {getStableMockSize(msg.whatsappMessageId || msg.id, "image")}
                       </span>
                     </button>
                   </div>
@@ -721,7 +721,7 @@ export default function MessageBubble({
                         )}
                       </div>
                       <span className="text-[11px] font-medium text-white/90 bg-black/30 px-2 py-0.5 rounded-full backdrop-blur-[2px] select-none">
-                        {isDownloadingMedia ? `Loading... ${Math.round(downloadProgress)}%` : getStableMockSize(msg.whatsappMessageId || msg.id, "video")}
+                        {getStableMockSize(msg.whatsappMessageId || msg.id, "video")}
                       </span>
                     </button>
                   </div>
@@ -801,7 +801,7 @@ export default function MessageBubble({
                   <p className="text-xs opacity-70 select-none">
                     {effectiveMimeType?.split("/")[1]?.toUpperCase() || "FILE"} • {
                       !isDownloaded 
-                        ? (isDownloadingMedia ? `Loading... ${Math.round(downloadProgress)}%` : getStableMockSize(msg.whatsappMessageId || msg.id, "document"))
+                        ? getStableMockSize(msg.whatsappMessageId || msg.id, "document")
                         : "Loaded in App"
                     }
                   </p>
