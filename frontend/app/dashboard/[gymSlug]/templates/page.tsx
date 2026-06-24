@@ -984,10 +984,13 @@ export default function MessageTemplatesPage() {
                               </div>
                             )}
                             {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'IMAGE' && 
-                             getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ? (
+                             (getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ||
+                              getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]) ? (
                               <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative">
                                 <img
-                                  src={`/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`}
+                                  src={getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename
+                                    ? `/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`
+                                    : getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]}
                                   alt="Header Image Preview"
                                   className="w-full h-auto max-h-[140px] object-cover"
                                 />
@@ -996,10 +999,13 @@ export default function MessageTemplatesPage() {
                                 </div>
                               </div>
                             ) : getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'VIDEO' && 
-                             getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ? (
+                             (getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename ||
+                              getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]) ? (
                               <div className="rounded-lg overflow-hidden border border-bubble-outbound-meta/10 mb-1 max-h-[140px] relative font-sans">
                                 <video
-                                  src={`/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`}
+                                  src={getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename
+                                    ? `/uploads/templates/${getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_filename}`
+                                    : getComponentOf(selectedTemplate.components, 'HEADER')?.example?.header_handle?.[0]}
                                   className="w-full h-auto max-h-[140px] object-cover"
                                   controls
                                 />
