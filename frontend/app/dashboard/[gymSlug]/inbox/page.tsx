@@ -652,7 +652,7 @@ export default function InboxPage() {
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-background">
+    <div className="flex flex-col md:flex-row -m-6 md:-m-8 h-[calc(100vh-4rem)] overflow-hidden bg-background">
       <div
         className={`${showChat ? "hidden md:block" : "block"} w-full md:w-auto h-full flex-shrink-0`}
       >
