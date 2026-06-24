@@ -371,16 +371,16 @@ export default function MessageTemplatesPage() {
 
       const data = await res.json();
       if (res.ok) {
-        toast.success('Draft template saved successfully!');
+        toast.success('Template submitted to Meta successfully!');
         resetForm();
         setIsCreateOpen(false);
         fetchTemplates();
       } else {
-        toast.error(data.error || 'Failed to create template draft.');
+        toast.error(data.error || 'Failed to submit template to Meta.');
       }
     } catch (err) {
       console.error(err);
-      toast.error('An unexpected error occurred while saving.');
+      toast.error('An unexpected error occurred during submission.');
     } finally {
       setIsSavingDraft(false);
     }
@@ -474,7 +474,8 @@ export default function MessageTemplatesPage() {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
+            disabled={!isConnected}
+            className={`flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               currentTheme === 'dark'
                 ? 'neon-btn-primary'
                 : 'bg-cyan-600 text-white hover:bg-cyan-500'
@@ -861,182 +862,200 @@ export default function MessageTemplatesPage() {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
             />
 
-             {/* Sliding drawer */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-950/80 backdrop-blur-xl border-l border-zinc-900 shadow-2xl z-50 flex flex-col justify-between overflow-hidden"
-            >
-              {/* Decorative glows */}
-              <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-              <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+            {/* Centered Modal Container */}
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="relative w-full max-w-xl max-h-[90vh] bg-zinc-950 border border-zinc-900 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
+              >
+                {/* Decorative glows */}
+                <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+                <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-zinc-900/60 p-5 relative z-10 bg-zinc-950/40">
-                <div>
-                  <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 uppercase tracking-wide">
-                    <Eye className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-                    Template Preview
-                  </h3>
-                  <span className="text-[10px] text-zinc-400 font-mono mt-1.5 px-2 py-0.5 rounded bg-zinc-900/60 border border-zinc-800/80 w-fit block">{selectedTemplate.templateName}</span>
-                </div>
-                <button
-                  onClick={() => setSelectedTemplate(null)}
-                  className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Drawer Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10">
-                {/* Meta details cards */}
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
-                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Approval Status</span>
-                    {getStatusBadge(selectedTemplate.status)}
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between border-b border-zinc-900/60 p-5 relative z-10 bg-zinc-950/40">
+                  <div>
+                    <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 uppercase tracking-wide">
+                      <Eye className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
+                      Template Preview
+                    </h3>
+                    <span className="text-[10px] text-zinc-400 font-mono mt-1.5 px-2 py-0.5 rounded bg-zinc-900/60 border border-zinc-800/80 w-fit block">{selectedTemplate.templateName}</span>
                   </div>
-                  
-                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
-                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Template Category</span>
-                    <span className="font-bold text-zinc-100 mt-1 block uppercase text-xs">{selectedTemplate.category}</span>
-                  </div>
-                  
-                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
-                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Language Code</span>
-                    <span className="font-bold text-zinc-300 mt-1 block uppercase text-xs">{selectedTemplate.language}</span>
-                  </div>
-                  
-                  <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-300">
-                    <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Meta ID</span>
-                    <span className="font-mono text-zinc-400 mt-1 block truncate text-[11px]" title={selectedTemplate.metaTemplateId || 'N/A'}>
-                      {selectedTemplate.metaTemplateId || 'Not registered'}
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => setSelectedTemplate(null)}
+                    className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
 
-                {/* WhatsApp Chat Preview */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#00a884] animate-pulse" />
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">WhatsApp Message Preview</span>
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10">
+                  {/* Meta details cards */}
+                  <div className="grid grid-cols-4 gap-2.5">
+                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                      <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Approval Status</span>
+                      {getStatusBadge(selectedTemplate.status)}
+                    </div>
+                    
+                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                      <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Template Category</span>
+                      <span className="font-bold text-zinc-100 mt-1 block uppercase text-[10px] truncate" title={selectedTemplate.category}>{selectedTemplate.category}</span>
+                    </div>
+                    
+                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                      <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Language Code</span>
+                      <span className="font-bold text-zinc-300 mt-1 block uppercase text-[10px] truncate" title={selectedTemplate.language}>{selectedTemplate.language}</span>
+                    </div>
+                    
+                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                      <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Meta ID</span>
+                      <span className="font-mono text-zinc-400 mt-1 block truncate text-[10px]" title={selectedTemplate.metaTemplateId || 'N/A'}>
+                        {selectedTemplate.metaTemplateId || 'Not registered'}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#2d3a42]/60 bg-[#0b141a] overflow-hidden shadow-2xl max-w-full sm:max-w-xs font-sans relative">
-                    {/* WhatsApp Header Mockup */}
-                    <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42]">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-zinc-400 text-sm cursor-pointer select-none">←</span>
-                        <div className="w-8 h-8 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-xs">
-                          <FileText className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-[#e9edef] leading-tight">Gym Member</span>
-                          <span className="block text-[9px] text-[#00a884] leading-tight font-semibold">online</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-3 text-zinc-400 text-[10px] select-none">
-                        <span>📞</span>
-                        <span>⋮</span>
-                      </div>
+                  {/* WhatsApp Chat Preview */}
+                  <div className="space-y-3 flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 self-start">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#00a884] animate-pulse" />
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">WhatsApp Message Preview</span>
                     </div>
 
-                    {/* Chat Area Mockup */}
-                    <div className="p-3.5 space-y-3 relative bg-[#0b141a] min-h-[220px] flex flex-col justify-end">
-                      {/* Background WhatsApp Doodle grid effect */}
-                      <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none" />
-
-                      {/* Chat Message Bubble (Outgoing) */}
-                      <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-3 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col">
-                        {/* Header element */}
-                        {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
-                          <div className="font-bold text-white text-xs border-b border-[#00705a] pb-1 mb-1.5">
-                            {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
-                          </div>
-                        )}
-                        {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
-                          <div className="rounded-lg bg-black/20 border border-[#004f40] p-4 text-center text-[10px] text-zinc-300 flex flex-col items-center justify-center gap-1.5 mb-1.5">
-                            <Upload className="h-4 w-4 text-cyan-400" />
-                            <span className="font-bold">{getComponentOf(selectedTemplate.components, 'HEADER')?.format}</span>
-                            <span className="text-[8px] text-[#8696a0] truncate max-w-[150px]">
-                              {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Body element */}
-                        <div className="whitespace-pre-wrap leading-relaxed text-xs break-words">
-                          {getComponentOf(selectedTemplate.components, 'BODY')?.text}
-                        </div>
-
-                        {/* Footer element */}
-                        {getComponentOf(selectedTemplate.components, 'FOOTER') && (
-                          <div className="text-[9px] text-[#e9edef]/60 mt-1 block">
-                            {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
-                          </div>
-                        )}
-
-                        {/* Timestamp & checkmarks */}
-                        <div className="self-end flex items-center gap-1 mt-1 text-[8px] text-[#e9edef]/60 leading-none">
-                          <span>12:34 PM</span>
-                          <span className="text-[#53bdeb]">✓✓</span>
-                        </div>
+                    {/* Smartphone Frame Mockup Wrapper */}
+                    <div className="relative mx-auto w-[290px] h-[520px] rounded-[38px] border-[10px] border-zinc-800 bg-[#0b141a] shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
+                      {/* Speaker Notch / Dynamic Island */}
+                      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
+                        <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
+                        <div className="w-8 h-1 bg-zinc-800/60 rounded-full ml-3" />
                       </div>
 
-                      {/* Interactive Buttons listing underneath outgoing bubble */}
-                      {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
-                        <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
-                          {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[11px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
-                            >
-                              {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
-                              {btn.text}
+                      {/* Camera Lens Indicator */}
+                      <div className="absolute top-2.5 right-6 w-2 h-2 bg-zinc-900 rounded-full z-30" />
+
+                      {/* Screen Content Wrapper */}
+                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
+                        {/* WhatsApp Header Mockup */}
+                        <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42] shrink-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
+                            <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
+                              <FileText className="w-3.5 h-3.5 text-white" />
                             </div>
-                          ))}
+                            <div>
+                              <span className="block text-[10px] font-bold text-[#e9edef] leading-tight">Gym Member</span>
+                              <span className="block text-[8px] text-[#00a884] leading-tight font-semibold">online</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
+                            <span>📞</span>
+                            <span>⋮</span>
+                          </div>
                         </div>
-                      )}
+
+                        {/* Chat Area Mockup */}
+                        <div className="flex-1 p-3.5 space-y-3 relative bg-[#0b141a] overflow-y-auto flex flex-col justify-end">
+                          {/* Background WhatsApp Doodle grid effect */}
+                          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
+
+                          {/* Chat Message Bubble (Outgoing) */}
+                          <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col text-[10px] leading-relaxed">
+                            {/* Header element */}
+                            {getComponentOf(selectedTemplate.components, 'HEADER')?.format === 'TEXT' && (
+                              <div className="font-bold text-white text-[10px] border-b border-[#00705a] pb-1 mb-1.5">
+                                {getComponentOf(selectedTemplate.components, 'HEADER')?.text}
+                              </div>
+                            )}
+                            {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(getComponentOf(selectedTemplate.components, 'HEADER')?.format || '') && (
+                              <div className="rounded-lg bg-black/20 border border-[#004f40] p-3 text-center text-[9px] text-zinc-300 flex flex-col items-center justify-center gap-1 mb-1">
+                                <Upload className="h-3.5 w-3.5 text-cyan-400" />
+                                <span className="font-bold">{getComponentOf(selectedTemplate.components, 'HEADER')?.format}</span>
+                                <span className="text-[7px] text-[#8696a0] truncate max-w-[120px]">
+                                  {getComponentOf(selectedTemplate.components, 'HEADER')?.example?.local_originalname || 'draft-file'}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Body element */}
+                            <div className="whitespace-pre-wrap leading-relaxed text-[10px] break-words">
+                              {getComponentOf(selectedTemplate.components, 'BODY')?.text}
+                            </div>
+
+                            {/* Footer element */}
+                            {getComponentOf(selectedTemplate.components, 'FOOTER') && (
+                              <div className="text-[8px] text-[#e9edef]/60 mt-1 block">
+                                {getComponentOf(selectedTemplate.components, 'FOOTER')?.text}
+                              </div>
+                            )}
+
+                            {/* Timestamp & checkmarks */}
+                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-[#e9edef]/60 leading-none">
+                              <span>12:34 PM</span>
+                              <span className="text-[#53bdeb]">✓✓</span>
+                            </div>
+                          </div>
+
+                          {/* Interactive Buttons listing underneath outgoing bubble */}
+                          {getComponentOf(selectedTemplate.components, 'BUTTONS') && (
+                            <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
+                              {getComponentOf(selectedTemplate.components, 'BUTTONS')?.buttons?.map((btn: any, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[10px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm"
+                                >
+                                  {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
+                                  {btn.text}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* iPhone Home Indicator bar at the bottom */}
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-zinc-700/60 rounded-full z-30" />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Drawer Footer Actions */}
-              <div className="border-t border-zinc-900/60 p-5 bg-[#0b0b0f]/60 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
-                <button
-                  onClick={() => setSelectedTemplate(null)}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-secondary"
-                >
-                  Close
-                </button>
+                {/* Drawer Footer Actions */}
+                <div className="border-t border-zinc-900/60 p-5 bg-[#0b0b0f]/60 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
+                  <button
+                    onClick={() => setSelectedTemplate(null)}
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-secondary"
+                  >
+                    Close
+                  </button>
 
-                {selectedTemplate.status === 'draft' ? (
-                  <button
-                    onClick={() => {
-                      handleSubmitToMeta(selectedTemplate.id);
-                      setSelectedTemplate(null);
-                    }}
-                    disabled={!isConnected}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary disabled:opacity-50"
-                  >
-                    <Send className="h-3.5 w-3.5" /> Submit to Meta
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      handleSyncTemplateStatus(selectedTemplate.id);
-                      setSelectedTemplate(null);
-                    }}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary"
-                  >
-                    <RefreshCcw className="h-3.5 w-3.5" /> Sync Status
-                  </button>
-                )}
-              </div>
-            </motion.div>
+                  {selectedTemplate.status === 'draft' ? (
+                    <button
+                      onClick={() => {
+                        handleSubmitToMeta(selectedTemplate.id);
+                        setSelectedTemplate(null);
+                      }}
+                      disabled={!isConnected}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary disabled:opacity-50"
+                    >
+                      <Send className="h-3.5 w-3.5" /> Submit to Meta
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        handleSyncTemplateStatus(selectedTemplate.id);
+                        setSelectedTemplate(null);
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-primary"
+                    >
+                      <RefreshCcw className="h-3.5 w-3.5" /> Sync Status
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
@@ -1063,7 +1082,7 @@ export default function MessageTemplatesPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="relative w-full max-w-xl max-h-[90vh] bg-zinc-950 border border-zinc-900 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
+                className="relative w-full max-w-4xl max-h-[90vh] bg-zinc-950 border border-zinc-900 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
               >
                 {/* Decorative glows */}
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
@@ -1086,8 +1105,10 @@ export default function MessageTemplatesPage() {
                   </button>
                 </div>
 
-                {/* Drawer Scrollable Form Content */}
-                <form onSubmit={handleCreateDraft} className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-zinc-300 relative z-10">
+                {/* Drawer Scrollable Form Content & Live Preview Split */}
+                <form onSubmit={handleCreateDraft} className="flex-1 overflow-hidden flex flex-col md:flex-row text-xs text-zinc-300 relative z-10">
+                  {/* Left Column: Form Fields (scrollable) */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6 border-r border-zinc-900/60">
                   {/* 1. Template Name */}
                   <div className="space-y-1.5">
                     <label className="block font-bold text-zinc-400 uppercase tracking-widest text-[9px]">
@@ -1348,6 +1369,109 @@ export default function MessageTemplatesPage() {
                       </p>
                     )}
                   </div>
+                  </div>
+
+                  {/* Right Column: Live Smartphone Preview */}
+                  <div className="w-full md:w-[340px] shrink-0 bg-zinc-950/20 p-6 flex flex-col items-center justify-center overflow-y-auto border-l border-zinc-900/60">
+                    <div className="flex items-center gap-1.5 self-start mb-4">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#00a884] animate-pulse" />
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Live WhatsApp Preview</span>
+                    </div>
+
+                    {/* Smartphone Frame Mockup Wrapper */}
+                    <div className="relative mx-auto w-[270px] h-[480px] rounded-[38px] border-[10px] border-zinc-800 bg-[#0b141a] shadow-2xl overflow-hidden flex flex-col justify-between font-sans select-none ring-1 ring-zinc-700/50">
+                      {/* Speaker Notch / Dynamic Island */}
+                      <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-zinc-850 rounded-full z-30 flex items-center justify-center border border-zinc-800/40">
+                        <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full ml-1.5" />
+                        <div className="w-8 h-1 bg-zinc-800/60 rounded-full ml-3" />
+                      </div>
+
+                      {/* Camera Lens Indicator */}
+                      <div className="absolute top-2.5 right-6 w-2 h-2 bg-zinc-900 rounded-full z-30" />
+
+                      {/* Screen Content Wrapper */}
+                      <div className="flex-1 flex flex-col justify-between overflow-hidden relative pt-7 pb-4">
+                        {/* WhatsApp Header Mockup */}
+                        <div className="bg-[#202c33] px-3.5 py-2.5 flex items-center justify-between border-b border-[#2d3a42] shrink-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-400 text-xs cursor-pointer select-none">←</span>
+                            <div className="w-6.5 h-6.5 rounded-full bg-cyan-600 flex items-center justify-center text-white font-extrabold text-[10px]">
+                              <FileText className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <div>
+                              <span className="block text-[10px] font-bold text-[#e9edef] leading-tight">Gym Member</span>
+                              <span className="block text-[8px] text-[#00a884] leading-tight font-semibold">online</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 text-zinc-400 text-[9px] select-none">
+                            <span>📞</span>
+                            <span>⋮</span>
+                          </div>
+                        </div>
+
+                        {/* Chat Area Mockup */}
+                        <div className="flex-1 p-3.5 space-y-3 relative bg-[#0b141a] overflow-y-auto flex flex-col justify-end font-sans">
+                          {/* Background WhatsApp Doodle grid effect */}
+                          <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:10px_10px] pointer-events-none" />
+
+                          {/* Chat Message Bubble (Outgoing) */}
+                          <div className="relative self-end bg-[#005c4b] text-[#e9edef] p-2.5 rounded-lg rounded-tr-none max-w-[90%] shadow-md border border-[#005c4b] z-10 flex flex-col text-[10px] leading-relaxed">
+                            {/* Header element */}
+                            {formHeaderType === 'TEXT' && formHeaderText && (
+                              <div className="font-bold text-white text-[10px] border-b border-[#00705a] pb-1 mb-1.5">
+                                {formHeaderText}
+                              </div>
+                            )}
+                            {['IMAGE', 'VIDEO', 'DOCUMENT'].includes(formHeaderType) && (
+                              <div className="rounded-lg bg-black/20 border border-[#004f40] p-3 text-center text-[9px] text-zinc-300 flex flex-col items-center justify-center gap-1 mb-1">
+                                <Upload className="h-3.5 w-3.5 text-cyan-400" />
+                                <span className="font-bold">{formHeaderType}</span>
+                                <span className="text-[7px] text-[#8696a0] truncate max-w-[120px]">
+                                  {formHeaderFile ? formHeaderFile.name : `Select ${formHeaderType.toLowerCase()} file`}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Body element */}
+                            <div className="whitespace-pre-wrap leading-relaxed text-[10px] break-words">
+                              {formBody || 'Enter template body content...'}
+                            </div>
+
+                            {/* Footer element */}
+                            {formFooter && (
+                              <div className="text-[8px] text-[#e9edef]/60 mt-1 block">
+                                {formFooter}
+                              </div>
+                            )}
+
+                            {/* Timestamp & checkmarks */}
+                            <div className="self-end flex items-center gap-1 mt-1 text-[7px] text-[#e9edef]/60 leading-none">
+                              <span>12:34 PM</span>
+                              <span className="text-[#53bdeb]">✓✓</span>
+                            </div>
+                          </div>
+
+                          {/* Interactive Buttons listing underneath outgoing bubble */}
+                          {formButtons.length > 0 && (
+                            <div className="self-end w-full max-w-[90%] space-y-1.5 z-10">
+                              {formButtons.map((btn) => (
+                                <div
+                                  key={btn.id}
+                                  className="w-full bg-[#202c33] hover:bg-[#2a3942] border border-[#2d3a42] rounded-lg py-1.5 px-3 text-[10px] text-[#53bdeb] font-bold text-center flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-sm font-sans"
+                                >
+                                  {btn.type === 'URL' && <ExternalLink className="h-3 w-3" />}
+                                  {btn.text || 'Button Label'}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* iPhone Home Indicator bar at the bottom */}
+                      <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-zinc-700/60 rounded-full z-30" />
+                    </div>
+                  </div>
 
                   {/* Invisible Form submit trigger */}
                   <button type="submit" className="hidden" id="submit-draft-btn" />
@@ -1371,7 +1495,7 @@ export default function MessageTemplatesPage() {
                     disabled={isSavingDraft}
                     className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-cyan-600 py-3 text-xs font-bold text-white transition-all hover:bg-cyan-500 disabled:opacity-50"
                   >
-                    {isSavingDraft ? 'Saving Draft...' : 'Save as Draft'}
+                    {isSavingDraft ? 'Submitting...' : 'Submit to Meta'}
                   </button>
                 </div>
               </motion.div>
