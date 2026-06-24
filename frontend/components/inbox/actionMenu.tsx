@@ -42,6 +42,31 @@ export default function ActionMenu({
         ? Math.min(window.innerWidth - menuWidth - 12, rect.left)
         : Math.max(12, rect.right - menuWidth);
 
+    const handleDownload = async (url: string, caption?: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            
+            const urlFilename = url.split("/").pop() || "file";
+            const ext = urlFilename.includes(".") ? "." + urlFilename.split(".").pop() : "";
+            const filename = caption 
+                ? caption.replace(/[^a-z0-9]/gi, "_").toLowerCase() + ext
+                : urlFilename;
+                
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            console.error("Failed to download file:", err);
+            window.open(url, "_blank");
+        }
+    };
+
     return (
         <AnimatePresence>
             <>
@@ -74,6 +99,16 @@ export default function ActionMenu({
                             onClose();
                         }}
                     />
+
+                    {message.mediaUrl && (
+                        <ActionButton
+                            label="Save to device"
+                            onClick={() => {
+                                handleDownload(message.mediaUrl!, message.caption || undefined);
+                                onClose();
+                            }}
+                        />
+                    )}
 
                     <ActionButton
                         label="Delete for me"

@@ -92,6 +92,24 @@ router.get("/", async (req, res) => {
         });
 
         const parsedText = lastMessage ? parseMessageText(lastMessage.text) : null;
+
+        // Compute WhatsApp 24-hour session window details
+        const lastInbound = await prisma.whatsAppMessage.findFirst({
+          where: {
+            gymId: gym.id,
+            direction: "INBOUND",
+            senderPhone: member.phone
+          },
+          orderBy: { createdAt: "desc" }
+        });
+
+        const now = new Date();
+        const sessionStarted = !!lastInbound;
+        const sessionExpiresAt = lastInbound 
+          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+          : null;
+        const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
+
         return {
           id: member.id,
           name: member.name,
@@ -109,7 +127,10 @@ router.get("/", async (req, res) => {
               }
             : null,
           lastMessageAt: lastMessage ? lastMessage.createdAt : member.updatedAt,
-          unreadCount
+          unreadCount,
+          sessionStarted,
+          sessionActive,
+          sessionExpiresAt
         };
       })
     );
@@ -1149,6 +1170,19 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
 
   if (!file) {
     return res.status(400).json({ error: "File is required" });
+  }
+
+  // Security check: Block executable/script files that could harm the platform or recipient
+  const harmfulExtensions = [
+    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl", 
+    ".wsf", ".jar", ".com", ".gadget", ".vb", ".vbe", ".jse", ".lnk", ".reg"
+  ];
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  if (harmfulExtensions.includes(ext)) {
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    return res.status(400).json({ error: "File type not allowed for security reasons." });
   }
 
   try {
