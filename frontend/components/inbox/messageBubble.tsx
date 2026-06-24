@@ -161,7 +161,7 @@ export default function MessageBubble({
 
   const cleanText =
     (msg.text || "")
-      .replace(/^\[(image|video|audio|document)(?:\s+message)?\]\s*/i, "")
+      .replace(/^\[(image|video|audio|document|media)(?:\s+message)?\]\s*/i, "")
       .trim() ||
     (msg.caption || "").trim() ||
     (msg.template?.body?.text || "").trim();
