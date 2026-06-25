@@ -509,3 +509,204 @@ body {
 .card-violet:hover::after {
   opacity: 1;
 }
+
+/* =====================================================
+   LANDING PAGE NOIR MODE STYLES & INTERACTIVE GRID
+   ===================================================== */
+
+@keyframes moveGridPattern {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 40px;
+  }
+}
+
+.noir-checkerboard {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(to right, rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: moveGridPattern 10s linear infinite;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+}
+
+.noir-mode-active .noir-checkerboard {
+  opacity: 1;
+}
+
+/* Premium Black and White Switch (Matching Reference Image) */
+.noir-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px 8px 14px;
+  background: #ffffff;
+  color: #000000;
+  border: 4px solid #000000;
+  border-radius: 9999px; /* Exact pill shape */
+  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  box-shadow: 6px 6px 0px #000000; /* Silhouette offset shadow */
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  user-select: none;
+}
+
+.noir-switch:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 7px 7px 0px #000000;
+}
+
+.noir-switch:active {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.noir-switch-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.noir-switch-box {
+  width: 22px;
+  height: 22px;
+  border: 4px solid #000000;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  border-radius: 6px; /* Rounded corners for the checkbox square */
+  flex-shrink: 0;
+}
+
+.noir-switch-checkbox:checked + .noir-switch-box {
+  background: #000000;
+}
+
+.noir-switch-box::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  border-radius: 2px;
+}
+
+.noir-switch-checkbox:checked + .noir-switch-box::after {
+  opacity: 1;
+}
+
+/* Page color does NOT change in Noir Mode (filter grayscale removed) */
+.noir-mode-active {
+  transition: all 0.5s ease-in-out;
+}
+
+.noir-mode-active ::selection {
+  background: #000000;
+  color: #ffffff;
+}
+
+/* All landing page main CTA buttons & cards change to have the Noir border & offset shadow style */
+.noir-mode-active header a[href="/register"],
+.noir-mode-active section a[href="/register"],
+.noir-mode-active section a[href="#demo"],
+.noir-mode-active #pricing a[href="/register"],
+.noir-mode-active .hero-dashboard-container,
+.noir-mode-active .feature-card,
+.noir-mode-active .testimonial-card,
+.noir-mode-active .pricing-card,
+.noir-mode-active .demo-prompt-btn,
+.noir-mode-active .roi-calculator-card {
+  border: 4px solid #000000 !important;
+  box-shadow: 6px 6px 0px #000000 !important;
+  text-shadow: none !important;
+  transform: translate(0px, 0px) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.noir-mode-active header a[href="/register"]:hover,
+.noir-mode-active section a[href="/register"]:hover,
+.noir-mode-active section a[href="#demo"]:hover,
+.noir-mode-active #pricing a[href="/register"]:hover,
+.noir-mode-active .hero-dashboard-container:hover,
+.noir-mode-active .feature-card:hover,
+.noir-mode-active .testimonial-card:hover,
+.noir-mode-active .pricing-card:hover,
+.noir-mode-active .demo-prompt-btn:hover,
+.noir-mode-active .roi-calculator-card:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 7.5px 7.5px 0px #000000 !important;
+}
+
+.noir-mode-active header a[href="/register"]:active,
+.noir-mode-active section a[href="/register"]:active,
+.noir-mode-active section a[href="#demo"]:active,
+.noir-mode-active #pricing a[href="/register"]:active,
+.noir-mode-active .hero-dashboard-container:active,
+.noir-mode-active .feature-card:active,
+.noir-mode-active .testimonial-card:active,
+.noir-mode-active .pricing-card:active,
+.noir-mode-active .demo-prompt-btn:active,
+.noir-mode-active .roi-calculator-card:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+}
+
+/* =====================================================
+   DASHBOARD PREVIEW SCANNER & STATUS PULSE ANIMATIONS
+   ===================================================== */
+
+@keyframes scanline {
+  0% {
+    top: -10%;
+  }
+  50%, 100% {
+    top: 110%;
+  }
+}
+
+.dashboard-scanner {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.12), transparent);
+  animation: scanline 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: 20;
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.92);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.92);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.pulse-online {
+  animation: pulse-green 2s infinite;
+  border-radius: 9999px;
+}

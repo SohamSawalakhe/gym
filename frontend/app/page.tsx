@@ -9,6 +9,7 @@ import {
   Star, ChevronRight, CheckCircle2, TrendingUp, Globe, Headphones, Sparkles,
   Play, ArrowUpRight, Shield, Clock, Target, Layers,
 } from 'lucide-react';
+import ThreeDashboardAnimation from '../components/dashboard/ThreeDashboardAnimation';
 
 /* ─────────── Animation helpers ─────────── */
 function FadeUp({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -143,6 +144,114 @@ function GlowOrb({ className }: { className: string }) {
   return <div className={`absolute rounded-full pointer-events-none ${className}`} />;
 }
 
+/* ─────────── ROI Calculator Component ─────────── */
+function RoiCalculator() {
+  const [members, setMembers] = useState(250);
+  const [fee, setFee] = useState(1500);
+
+  // Estimates:
+  // Chasing renewal takes ~10 minutes per member per month = 1/6 hours
+  const hoursSaved = Math.round(members * (10 / 60));
+  // 8% average increase in collected revenue due to auto-alerts & UPI payment link checkouts
+  const recoveryValue = Math.round(members * fee * 0.08);
+  // FitFlow Pricing Tier mapping
+  let softwareCost = 1999;
+  if (members > 500) {
+    softwareCost = 7999;
+  } else if (members > 150) {
+    softwareCost = 3999;
+  }
+
+  const netReturn = recoveryValue - softwareCost;
+
+  return (
+    <div className="roi-calculator-card bg-white rounded-3xl p-6 md:p-10 border border-slate-200 shadow-xl shadow-slate-100/60 max-w-4xl mx-auto transition-all">
+      <div className="grid md:grid-cols-2 gap-8 items-center">
+        {/* Left Side Controls */}
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-extrabold text-slate-900 mb-1">Calculate Your ROI</h3>
+            <p className="text-sm text-slate-500">Adjust the sliders to estimate your savings & revenue boost.</p>
+          </div>
+
+          {/* Members Slider */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm font-bold">
+              <span className="text-slate-700">Active Members</span>
+              <span className="text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">{members} members</span>
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="1000"
+              step="10"
+              value={members}
+              onChange={(e) => setMembers(Number(e.target.value))}
+              className="w-full h-2 bg-slate-150 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+              <span>50</span>
+              <span>500</span>
+              <span>1,000</span>
+            </div>
+          </div>
+
+          {/* Fee Slider */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm font-bold">
+              <span className="text-slate-700">Avg. Monthly Fee</span>
+              <span className="text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">₹{fee.toLocaleString('en-IN')}</span>
+            </div>
+            <input
+              type="range"
+              min="500"
+              max="5000"
+              step="100"
+              value={fee}
+              onChange={(e) => setFee(Number(e.target.value))}
+              className="w-full h-2 bg-slate-150 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+              <span>₹500</span>
+              <span>₹2,500</span>
+              <span>₹5,000</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side Outputs */}
+        <div className="bg-slate-50/80 rounded-2xl p-6 border border-slate-100 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Hours Saved /mo</span>
+              <span className="text-2xl font-extrabold text-indigo-600">{hoursSaved}h</span>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm text-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Addl. Collection</span>
+              <span className="text-2xl font-extrabold text-emerald-600 font-sans">₹{recoveryValue.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-200/60">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1.5">
+              <span>FitFlow Monthly Cost</span>
+              <span className="font-bold text-slate-700">₹{softwareCost.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm font-bold text-slate-800">
+              <span>Estimated Monthly Return</span>
+              <span className="text-lg font-extrabold text-indigo-700 font-sans">₹{netReturn > 0 ? `+${netReturn.toLocaleString('en-IN')}` : netReturn.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <Link href="/register" className="w-full text-center py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-0.5 block">
+            Start Free Trial & Save Today
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────── types ─────────── */
 interface ChatMessage { id: string; type: 'INBOUND' | 'CHATBOT'; message: string; time: string; }
 
@@ -152,11 +261,52 @@ interface ChatMessage { id: string; type: 'INBOUND' | 'CHATBOT'; message: string
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [noirMode, setNoirMode] = useState(false);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
+  }, []);
+
+  const [headlineWordIndex, setHeadlineWordIndex] = useState(0);
+  const headlineWords = ['Fully Automated', 'Always Paid', 'Stress-Free'];
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setHeadlineWordIndex(p => (p + 1) % headlineWords.length);
+    }, 2800);
+    return () => clearInterval(cycle);
+  }, []);
+
+  const [activeToast, setActiveToast] = useState<{gym: string; action: string; time: string} | null>(null);
+  useEffect(() => {
+    const toasts = [
+      { gym: 'PowerFit Gym (Mumbai)', action: 'collected ₹3,999 renewal', time: 'Just now' },
+      { gym: 'FlexZone Studio (Bangalore)', action: 'automated 14 check-ins', time: '1m ago' },
+      { gym: 'IronCore Fitness (Ahmedabad)', action: 'recovered ₹12,999 annual plan', time: '3m ago' },
+      { gym: 'Gold Standard Gym (Delhi)', action: 'sent 8 auto-renew alerts', time: '5m ago' },
+      { gym: 'Dumbbell Club (Pune)', action: 'collected ₹1,499 Gold membership', time: '8m ago' }
+    ];
+
+    const timer = setTimeout(() => {
+      setActiveToast(toasts[Math.floor(Math.random() * toasts.length)]);
+      const hideTimer = setTimeout(() => {
+        setActiveToast(null);
+      }, 4000);
+      return () => clearTimeout(hideTimer);
+    }, 6000);
+
+    const interval = setInterval(() => {
+      setActiveToast(toasts[Math.floor(Math.random() * toasts.length)]);
+      setTimeout(() => {
+        setActiveToast(null);
+      }, 4000);
+    }, 18000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   /* WhatsApp Simulator */
@@ -203,7 +353,9 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden">
+    <div className={`min-h-screen bg-white text-slate-900 font-sans overflow-x-hidden relative ${noirMode ? 'noir-mode-active' : ''}`}>
+      {/* Noir Checkerboard Overlay */}
+      <div className="noir-checkerboard" />
 
       {/* ═══════════════════════════════
            NAVBAR
@@ -228,6 +380,18 @@ export default function LandingPage() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            {/* Noir Mode Toggler */}
+            <label className="noir-switch mr-2">
+              <input
+                type="checkbox"
+                className="noir-switch-checkbox"
+                checked={noirMode}
+                onChange={() => setNoirMode(!noirMode)}
+              />
+              <div className="noir-switch-box"></div>
+              <span className="text-[10px]">Noir Mode</span>
+            </label>
+
             <Link href="/login" className="text-sm font-semibold text-slate-500 hover:text-slate-900 px-4 py-2 transition-colors">Log In</Link>
             <Link href="/register" className="text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all hover:-translate-y-0.5">
               Get Started Free
@@ -272,7 +436,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
               <span className="inline-flex items-center gap-2 bg-white text-indigo-700 text-xs font-bold px-4 py-2 rounded-full border border-indigo-100 shadow-md shadow-indigo-100/60 mb-8">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500 pulse-online" />
                 Now Live — WhatsApp Automation for Gyms
                 <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               </span>
@@ -281,7 +445,21 @@ export default function LandingPage() {
             <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}
               className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-[1.08] tracking-tight">
               <span className="text-slate-900">Your Gym,</span><br />
-              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent">Fully Automated</span><br />
+              <span className="relative inline-block h-[1.1em] overflow-hidden align-bottom min-w-[280px] sm:min-w-[420px] md:min-w-[480px]">
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={headlineWordIndex}
+                    initial={{ y: 24, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -24, opacity: 0 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute left-0 right-0 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 bg-clip-text text-transparent block whitespace-nowrap"
+                  >
+                    {headlineWords[headlineWordIndex]}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="opacity-0 pointer-events-none select-none block whitespace-nowrap">Fully Automated</span>
+              </span><br />
               <span className="text-slate-900">via WhatsApp</span>
             </motion.h1>
 
@@ -319,8 +497,30 @@ export default function LandingPage() {
           {/* Hero Dashboard Card */}
           <motion.div initial={{ opacity: 0, y: 60, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.7, duration: 0.9, type: 'spring', stiffness: 40 }}
-            className="mt-16 max-w-5xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-2xl shadow-slate-900/[0.08] border border-slate-100 overflow-hidden ring-1 ring-slate-900/[0.03]">
+            className="mt-16 max-w-5xl mx-auto relative px-4 sm:px-0">
+            {/* Left floating badge */}
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+              className="absolute -left-12 top-1/4 hidden lg:flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-2.5 shadow-md shadow-indigo-100/50 z-25 text-xs font-bold text-indigo-700 select-none"
+            >
+              <MessageCircle className="h-4 w-4 text-indigo-500" />
+              <span>UPI Payment Link Sent 💬</span>
+            </motion.div>
+
+            {/* Right floating badge */}
+            <motion.div
+              animate={{ y: [0, 12, 0] }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: 'easeInOut' }}
+              className="absolute -right-12 bottom-1/4 hidden lg:flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-2xl px-4 py-2.5 shadow-md shadow-emerald-100/50 z-25 text-xs font-bold text-emerald-700 select-none"
+            >
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span>Payment Verified ₹3,999 ✅</span>
+            </motion.div>
+
+            <div className="hero-dashboard-container bg-white rounded-3xl shadow-2xl shadow-slate-900/[0.08] border border-slate-100 overflow-hidden ring-1 ring-slate-900/[0.03] relative">
+              {/* Animated scanning monitor beam */}
+              <div className="dashboard-scanner" />
               <div className="bg-slate-50/80 border-b border-slate-100 px-5 py-3 flex items-center gap-3">
                 <div className="flex gap-2">
                   <span className="h-3 w-3 rounded-full bg-rose-400" />
@@ -350,17 +550,36 @@ export default function LandingPage() {
                     </motion.div>
                   ))}
                 </div>
-                <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Revenue — Last 6 Months</p>
-                  <div className="h-32 flex items-end gap-3 px-1">
-                    {[35, 50, 42, 68, 82, 100].map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
-                        <motion.div style={{ height: `${h}%` }} initial={{ height: 0 }} animate={{ height: `${h}%` }}
-                          transition={{ delay: 1.2 + i * 0.1, duration: 0.6, ease: 'easeOut' }}
-                          className="w-full rounded-xl bg-gradient-to-t from-indigo-600 to-violet-500 shadow-sm" />
-                        <span className="text-[10px] font-semibold text-slate-400">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i]}</span>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Revenue Chart - Span 2 columns */}
+                  <div className="md:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Revenue — Last 6 Months</p>
+                    <div className="h-36 flex items-end justify-center gap-4 px-2">
+                      {[35, 50, 42, 68, 82, 100].map((h, i) => (
+                        <div key={i} className="flex flex-col items-center justify-end h-full group pb-1">
+                          {/* Interactive floating value tooltip */}
+                          <span className="text-[9px] font-extrabold text-indigo-600 scale-90 group-hover:scale-100 group-hover:-translate-y-0.5 transition-all opacity-0 group-hover:opacity-100 duration-200 mb-0.5 select-none">
+                            ₹{Math.round(h * 1.84)}k
+                          </span>
+                          <motion.div 
+                            style={{ height: `${h * 0.7}%` }} 
+                            initial={{ height: 0 }} 
+                            animate={{ height: `${h * 0.7}%` }}
+                            transition={{ delay: 1.2 + i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            className="w-8 sm:w-10 rounded-t-lg bg-gradient-to-t from-indigo-600 to-violet-600 shadow-md hover:shadow-indigo-500/30 transition-all duration-200 cursor-pointer" 
+                          />
+                          <span className="text-[10px] font-bold text-slate-400 mt-1.5">{['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Three.js Live Check-in Stream - Span 1 column */}
+                  <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Check-in Network</p>
+                    <div className="flex-1 flex items-center justify-center min-h-[140px]">
+                      <ThreeDashboardAnimation />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -414,7 +633,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-6 gap-5">
             {/* Large hero card */}
             <FadeUp className="md:col-span-4">
-              <div className="group h-full bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:-translate-y-1 transition-all duration-300">
+              <div className="feature-card group h-full bg-gradient-to-br from-indigo-600 to-violet-700 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:-translate-y-1 transition-all duration-300">
                 <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-white/10 blur-3xl translate-x-1/3 -translate-y-1/3" />
                 <div className="absolute -bottom-10 -left-10 w-56 h-56 rounded-full bg-violet-500/20 blur-3xl" />
                 <div className="relative z-10">
@@ -439,7 +658,7 @@ export default function LandingPage() {
                 { icon: Bell, bg: 'bg-amber-50', color: 'text-amber-600', border: 'border-amber-100', title: 'Smart Renewal Alerts', desc: 'Automated reminders with personalized templates & payment links.' },
               ].map((c, i) => (
                 <FadeUp key={i} delay={0.1 + i * 0.05}>
-                  <div className={`group bg-white rounded-3xl border ${c.border} p-6 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 shadow-sm`}>
+                  <div className={`feature-card group bg-white rounded-3xl border ${c.border} p-6 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 shadow-sm`}>
                     <div className={`h-12 w-12 rounded-2xl ${c.bg} flex items-center justify-center ${c.color} mb-4 group-hover:scale-110 transition-transform`}>
                       <c.icon className="h-6 w-6" />
                     </div>
@@ -457,7 +676,7 @@ export default function LandingPage() {
               { icon: Settings, bg: 'bg-violet-50', color: 'text-violet-600', border: 'border-violet-100', title: 'Plan & CRM Manager', desc: 'Create tiers, manage profiles, configure bot.' },
             ].map((f, i) => (
               <FadeUp key={i} delay={0.1 + i * 0.08} className="md:col-span-2">
-                <div className={`group bg-white rounded-3xl border ${f.border} p-6 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 shadow-sm h-full`}>
+                <div className={`feature-card group bg-white rounded-3xl border ${f.border} p-6 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 shadow-sm h-full`}>
                   <div className={`h-12 w-12 rounded-2xl ${f.bg} flex items-center justify-center ${f.color} mb-4 group-hover:scale-110 transition-transform`}>
                     <f.icon className="h-6 w-6" />
                   </div>
@@ -549,7 +768,7 @@ export default function LandingPage() {
                       onClick={() => fire(p.cmd)}
                       whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.97 }}
-                      className={`group w-full flex items-center gap-3 border ${p.border} ${p.hover} rounded-2xl p-3.5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md`}
+                      className={`demo-prompt-btn group w-full flex items-center gap-3 border ${p.border} ${p.hover} rounded-2xl p-3.5 text-left transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md`}
                     >
                       <span className="text-xl flex-shrink-0">{p.emoji}</span>
                       <div className="flex-1 min-w-0">
@@ -648,6 +867,26 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════════════════════
+           ROI CALCULATOR
+          ═══════════════════════════════ */}
+      <section className="py-24 bg-[#FAFBFE] border-y border-slate-100 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(99,102,241,.03)_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="relative max-w-7xl mx-auto px-6 z-10">
+          <FadeUp className="text-center max-w-2xl mx-auto mb-16">
+            <span className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-4 py-2 rounded-full border border-indigo-100">
+              <TrendingUp className="h-3.5 w-3.5" /> ROI Estimator
+            </span>
+            <h2 className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+              See what you will <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent font-sans">save & earn</span>
+            </h2>
+            <p className="mt-4 text-slate-500 text-lg leading-relaxed">Calculate how much time you save and how much extra revenue you recover with automated billing.</p>
+          </FadeUp>
+
+          <RoiCalculator />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════
            TESTIMONIALS
           ═══════════════════════════════ */}
       <section className="py-24 md:py-28 bg-white">
@@ -668,7 +907,7 @@ export default function LandingPage() {
               { name: 'Amit Patel', gym: 'IronCore Fitness, Ahmedabad', text: 'The human takeover feature is brilliant. Bot handles 95% of queries and we step in only when needed.', avatar: 'AP', bg: 'bg-emerald-100', color: 'text-emerald-600' },
             ].map((t, i) => (
               <FadeUp key={i} delay={i * 0.1}>
-                <div className="bg-slate-50 rounded-3xl p-8 hover:bg-white hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 h-full flex flex-col border border-transparent hover:border-slate-100">
+                <div className="testimonial-card bg-slate-50 rounded-3xl p-8 hover:bg-white hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 h-full flex flex-col border border-transparent hover:border-slate-100">
                   <div className="flex gap-1 mb-5">
                     {[...Array(5)].map((_, j) => <Star key={j} className="h-4 w-4 text-amber-400 fill-amber-400" />)}
                   </div>
@@ -723,7 +962,7 @@ export default function LandingPage() {
               <FadeUp key={i} delay={i * 0.1}>
                 <div className={`relative rounded-3xl h-full flex flex-col ${p.highlight ? 'z-10' : ''}`}>
                   {p.highlight && <div className="absolute -inset-[2px] bg-gradient-to-b from-indigo-500 via-violet-500 to-purple-500 rounded-[26px]" />}
-                  <div className={`relative bg-white rounded-3xl p-8 flex flex-col flex-1 ${p.highlight ? 'shadow-xl shadow-indigo-500/15' : 'border border-slate-200 hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-0.5 transition-all'}`}>
+                  <div className={`pricing-card relative bg-white rounded-3xl p-8 flex flex-col flex-1 ${p.highlight ? 'shadow-xl shadow-indigo-500/15' : 'border border-slate-200 hover:shadow-lg hover:shadow-slate-200/60 hover:-translate-y-0.5 transition-all'}`}>
                     {p.highlight && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-extrabold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">Most Popular</span>}
                     <div className="pt-1">
                       <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">{p.name}</h3>
@@ -871,6 +1110,28 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Dynamic Toast Notifications */}
+      <AnimatePresence>
+        {activeToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+            className="fixed bottom-6 left-6 z-50 bg-slate-900 text-white rounded-2xl px-5 py-4 shadow-2xl shadow-slate-950/40 border border-slate-800 flex items-center gap-3.5 max-w-sm select-none"
+          >
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Zap className="h-5 w-5 animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-slate-200">{activeToast.gym}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5 font-medium">{activeToast.action}</p>
+            </div>
+            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{activeToast.time}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
