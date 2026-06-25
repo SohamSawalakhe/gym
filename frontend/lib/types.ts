@@ -106,6 +106,7 @@ export interface Message {
   id: string;
   whatsappMessageId?: string;
   replyToMessageId?: string;
+  content?: string;
 
   replyTo?: {
     sender: "customer" | "executive";
@@ -168,6 +169,7 @@ export interface Message {
   }[];
   outboundPayload?: any;
   messageType?: string;
+  content?: string;
 }
 
 export interface Template {

@@ -58,13 +58,46 @@ router.post("/", async (req, res) => {
       return;
     }
 
-    const gym = await prisma.gym.findFirst({
+    // Find all gyms sharing this phone number ID
+    const gyms = await prisma.gym.findMany({
       where: { whatsapp_phone_number_id: phoneNumberId },
     });
 
-    if (!gym) {
+    if (gyms.length === 0) {
       console.warn(`⚠️ Received WhatsApp webhook for unregistered Phone ID: ${phoneNumberId}`);
       return;
+    }
+
+    // Determine the correct gym tenant
+    let gym = gyms[0];
+    if (gyms.length > 1) {
+      let resolvedGym = null;
+
+      if (value.messages?.length) {
+        const phoneToMatch = value.messages[0].from;
+        const matchingMember = await prisma.member.findFirst({
+          where: {
+            phone: phoneToMatch,
+            gymId: { in: gyms.map(g => g.id) }
+          }
+        });
+        if (matchingMember) {
+          resolvedGym = gyms.find(g => g.id === matchingMember.gymId);
+        }
+      } else if (value.statuses?.length) {
+        const messageId = value.statuses[0].id;
+        const matchingMessage = await prisma.whatsAppMessage.findUnique({
+          where: { messageId },
+          select: { gymId: true }
+        });
+        if (matchingMessage) {
+          resolvedGym = gyms.find(g => g.id === matchingMessage.gymId);
+        }
+      }
+
+      if (resolvedGym) {
+        gym = resolvedGym;
+      }
     }
 
     console.log(`🏢 Resolved Gym Tenant: "${gym.name}" (Slug: ${gym.slug}) for Phone ID: ${phoneNumberId}`);
@@ -100,6 +133,31 @@ router.post("/", async (req, res) => {
         });
 
         if (!exists) {
+          let textPayload = text;
+
+          // Handle incoming media files (image, video, audio, document, sticker)
+          if (["image", "video", "audio", "document", "sticker"].includes(msg.type)) {
+            const mediaObj = msg[msg.type];
+            const mediaId = mediaObj?.id;
+            const mimeType = mediaObj?.mime_type || "";
+            const caption = mediaObj?.caption || "";
+
+            if (mediaId) {
+              const mediaUrl = `/api/media/${gym.slug}/${mediaId}`;
+              
+              textPayload = JSON.stringify({
+                mediaUrl,
+                mimeType,
+                caption
+              });
+
+              console.log(`🔗 Mapped incoming media (Type: ${msg.type}) to public proxy URL: ${mediaUrl}`);
+              
+              // Update local display text for logs and console
+              text = caption || `[${msg.type} message]`;
+            }
+          }
+
           // Log message to database
           const incomingMessage = await prisma.whatsAppMessage.create({
             data: {
@@ -107,7 +165,7 @@ router.post("/", async (req, res) => {
               messageId,
               senderPhone,
               recipientPhone,
-              text,
+              text: textPayload,
               direction: "INBOUND",
               status: "RECEIVED",
             },
@@ -129,10 +187,32 @@ router.post("/", async (req, res) => {
             });
 
             if (member) {
+              // Parse message text if it is a media JSON payload
+              let content = incomingMessage.text;
+              let mediaUrl = undefined;
+              let mimeType = undefined;
+              let caption = undefined;
+
+              if (content.startsWith("{")) {
+                try {
+                  const parsed = JSON.parse(content);
+                  if (parsed.mediaUrl) {
+                    content = parsed.caption || `[${msg.type} message]`;
+                    mediaUrl = parsed.mediaUrl;
+                    mimeType = parsed.mimeType;
+                    caption = parsed.caption;
+                  }
+                } catch (e) {}
+              }
+
               const mappedMsg = {
                 id: incomingMessage.id,
                 whatsappMessageId: incomingMessage.messageId,
-                content: incomingMessage.text,
+                content,
+                text: content,
+                mediaUrl,
+                mimeType,
+                caption,
                 direction: "inbound",
                 status: "received",
                 createdAt: incomingMessage.createdAt

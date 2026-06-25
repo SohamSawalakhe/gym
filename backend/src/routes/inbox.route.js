@@ -92,6 +92,24 @@ router.get("/", async (req, res) => {
         });
 
         const parsedText = lastMessage ? parseMessageText(lastMessage.text) : null;
+
+        // Compute WhatsApp 24-hour session window details
+        const lastInbound = await prisma.whatsAppMessage.findFirst({
+          where: {
+            gymId: gym.id,
+            direction: "INBOUND",
+            senderPhone: member.phone
+          },
+          orderBy: { createdAt: "desc" }
+        });
+
+        const now = new Date();
+        const sessionStarted = !!lastInbound;
+        const sessionExpiresAt = lastInbound 
+          ? new Date(new Date(lastInbound.createdAt).getTime() + 24 * 60 * 60 * 1000) 
+          : null;
+        const sessionActive = sessionExpiresAt ? sessionExpiresAt > now : false;
+
         return {
           id: member.id,
           name: member.name,
@@ -109,7 +127,10 @@ router.get("/", async (req, res) => {
               }
             : null,
           lastMessageAt: lastMessage ? lastMessage.createdAt : member.updatedAt,
-          unreadCount
+          unreadCount,
+          sessionStarted,
+          sessionActive,
+          sessionExpiresAt
         };
       })
     );
@@ -987,6 +1008,65 @@ router.post("/:memberId/send-template", async (req, res) => {
 
     const components = [];
 
+    // 🔹 Build Header parameters if template has media header
+    const componentsRaw = Array.isArray(template.components) ? template.components : [];
+    const headerComp = componentsRaw.find((c) => c.type === "HEADER");
+
+    if (headerComp && ["IMAGE", "VIDEO", "DOCUMENT"].includes(headerComp.format)) {
+      const fileInfo = headerComp.example;
+      if (fileInfo && fileInfo.local_filename) {
+        const templatesUploadDir = "uploads/templates";
+        const filePath = path.join(templatesUploadDir, fileInfo.local_filename);
+        if (fs.existsSync(filePath)) {
+          console.log(`🔌 [Send Template] Uploading header media "${fileInfo.local_filename}" to Meta...`);
+          const fileBuffer = fs.readFileSync(filePath);
+          const blob = new Blob([fileBuffer], { type: fileInfo.local_mimetype || "image/jpeg" });
+
+          const waForm = new FormData();
+          waForm.append("messaging_product", "whatsapp");
+          waForm.append("file", blob, fileInfo.local_originalname || "header-file");
+
+          const uploadRes = await fetch(
+            `${GRAPH_BASE_URL}/${META_API_VERSION}/${gym.whatsapp_phone_number_id}/media`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`
+              },
+              body: waForm
+            }
+          );
+
+          if (!uploadRes.ok) {
+            const errData = await uploadRes.json();
+            console.error("❌ Failed to upload template header media to Meta:", errData);
+            return res.status(400).json({
+              error: errData?.error?.message || "Failed to upload template header media to Meta"
+            });
+          }
+
+          const uploadData = await uploadRes.json();
+          const mediaId = uploadData.id;
+
+          if (mediaId) {
+            const formatLower = headerComp.format.toLowerCase();
+            components.push({
+              type: "header",
+              parameters: [
+                {
+                  type: formatLower,
+                  [formatLower]: {
+                    id: mediaId
+                  }
+                }
+              ]
+            });
+            console.log(`✅ [Send Template] Header media uploaded. ID: ${mediaId}`);
+          }
+        }
+      }
+    }
+
     // 🔹 Build Body parameters
     if (bodyVariables && bodyVariables.length > 0) {
       components.push({
@@ -1032,7 +1112,6 @@ router.post("/:memberId/send-template", async (req, res) => {
     const messageId = resData.messages?.[0]?.id || `temp-${Date.now()}`;
 
     // Reconstruct message body text for database/inbox log
-    const componentsRaw = Array.isArray(template.components) ? template.components : [];
     const bodyComp = componentsRaw.find((c) => c.type === "BODY");
     let content = bodyComp ? bodyComp.text : "";
     if (bodyVariables && bodyVariables.length > 0) {
@@ -1091,6 +1170,19 @@ router.post("/:memberId/send-media", upload.single("file"), async (req, res) => 
 
   if (!file) {
     return res.status(400).json({ error: "File is required" });
+  }
+
+  // Security check: Block executable/script files that could harm the platform or recipient
+  const harmfulExtensions = [
+    ".exe", ".msi", ".bat", ".cmd", ".sh", ".vbs", ".js", ".scr", ".pif", ".cpl", 
+    ".wsf", ".jar", ".com", ".gadget", ".vb", ".vbe", ".jse", ".lnk", ".reg"
+  ];
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  if (harmfulExtensions.includes(ext)) {
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    return res.status(400).json({ error: "File type not allowed for security reasons." });
   }
 
   try {

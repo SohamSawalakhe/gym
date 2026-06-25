@@ -54,8 +54,8 @@ const mapApiConversation = (c: any): Conversation => {
     lastMessageStatus: c.lastMessage?.status,
     unreadCount,
     hasUnread: unreadCount > 0,
-    sessionStarted: c.sessionStarted ?? true,
-    sessionActive: c.sessionActive ?? true,
+    sessionStarted: c.sessionStarted ?? false,
+    sessionActive: c.sessionActive ?? false,
     sessionExpiresAt: c.sessionExpiresAt ?? null,
     templateRequired: c.sessionActive === false,
     isBlocked: !!c.isBlocked,
@@ -201,7 +201,7 @@ function ChatArea({
 
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const genericInputRef = useRef<HTMLInputElement | null>(null);
-  const isSessionActive = conversation.sessionActive !== false;
+  const isSessionActive = !!conversation.sessionActive;
 
   useChatSocket({
     conversationId: conversation.id,
@@ -252,9 +252,9 @@ function ChatArea({
       setSelectedTemplate(null);
       setTemplateVariables([]);
       toast.success("Template sent successfully!");
-    } catch (err) {
-      console.error("Failed to send template", err);
-      toast.error("Failed to send template");
+    } catch (err: any) {
+      console.warn("Failed to send template:", err);
+      toast.error(err.message || "Failed to send template");
     } finally {
       setIsSendingTemplate(false);
     }
@@ -307,14 +307,19 @@ function ChatArea({
         });
 
         if (!res.ok) {
-          throw new Error("Failed to send media");
+          let errMsg = "Failed to send media";
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errData.message || errMsg;
+          } catch (e) {}
+          throw new Error(errMsg);
         }
       }
       setImagePreview(null);
       toast.success("Media message sent successfully!");
     } catch (err) {
-      console.error("Media send failed", err);
-      toast.error("Failed to send media");
+      console.error("Media send failed:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to send media");
     } finally {
       setSendingPreview(false);
     }
@@ -388,7 +393,18 @@ function ChatArea({
       />
 
       {/* MESSAGES WRAPPER */}
-      <div className="relative flex-1 min-h-0 overflow-hidden bg-[#0b141a]">
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        {/* FIXED WHATSAPP BACKGROUND */}
+        <div
+          className="
+            absolute inset-0
+            bg-wa-chat-bg
+            pointer-events-none
+          "
+        >
+          <div className="absolute inset-0 bg-[url('/chat-bg.png')] bg-repeat bg-center opacity-30 dark:opacity-[0.5]" />
+        </div>
+
         {/* SCROLLABLE MESSAGES */}
         <ChatMessages
           messages={messages}
@@ -447,7 +463,12 @@ function ChatArea({
               });
 
               if (!res.ok) {
-                throw new Error("Failed to send media");
+                let errMsg = "Failed to send media";
+                try {
+                  const errData = await res.json();
+                  errMsg = errData.error || errData.message || errMsg;
+                } catch (e) {}
+                throw new Error(errMsg);
               }
             }
             setMediaModal(null);
@@ -455,7 +476,7 @@ function ChatArea({
             genericInputRef.current && (genericInputRef.current.value = "");
           } catch (err) {
             console.error("Failed to send media:", err);
-            toast.error("Failed to send media");
+            toast.error(err instanceof Error ? err.message : "Failed to send media");
           }
         }}
         /* TEMPLATE */
@@ -652,7 +673,7 @@ export default function InboxPage() {
   );
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-background">
+    <div className="flex flex-col md:flex-row -m-6 md:-m-8 h-[calc(100vh-4rem)] overflow-hidden bg-background">
       <div
         className={`${showChat ? "hidden md:block" : "block"} w-full md:w-auto h-full flex-shrink-0`}
       >
@@ -690,16 +711,19 @@ export default function InboxPage() {
             }}
           />
         ) : (
-          <div className="h-full flex items-center justify-center bg-[#0b141a]/10">
-            <div className="text-center px-4 max-w-md">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-4 sm:mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-                <MessageSquareIcon className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
+          <div className="h-full flex items-center justify-center bg-zinc-950 relative overflow-hidden">
+            {/* Soft decorative glow behind the placeholder */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-cyan-500/5 blur-[80px] pointer-events-none" />
+            
+            <div className="text-center px-4 max-w-sm z-10 relative">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-xl">
+                <MessageSquareIcon className="w-10 h-10 sm:w-12 sm:h-12 text-cyan-400" />
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-lg sm:text-xl font-extrabold text-zinc-100 mb-2">
                 Select a conversation
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Choose a chat from the left to start messaging
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
+                Choose a customer chat from the list on the left to start real-time messaging.
               </p>
             </div>
           </div>
