@@ -97,7 +97,7 @@ export default function PlansPage() {
       {/* Page Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Membership Plans</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl">Membership Plans</h2>
           <p className="text-xs text-zinc-500 mt-1">Configure durations, pricing models, and benefits for your gym members.</p>
         </div>
         <button
@@ -112,7 +112,7 @@ export default function PlansPage() {
         {/* Plans Grid */}
         <div className="lg:col-span-2">
           {isLoading ? (
-            <div className="flex h-48 items-center justify-center text-xs text-zinc-500 bg-zinc-950/40 rounded-2xl border border-zinc-900">Loading plans...</div>
+            <div className="flex h-48 items-center justify-center text-xs text-zinc-500 bg-zinc-950/40 rounded-2xl border border-zinc-800">Loading plans...</div>
           ) : plans.length === 0 ? (
             <div className="flex h-48 flex-col items-center justify-center text-center text-zinc-500 bg-zinc-950/40 rounded-2xl border border-dashed border-zinc-800">
               <CreditCard className="h-8 w-8 text-zinc-700 mb-2" />
@@ -130,7 +130,7 @@ export default function PlansPage() {
                 <div key={p.id} className="group relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950/60 p-6 backdrop-blur-md transition-all hover:border-zinc-700">
                   <div className="mb-4 flex items-start justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">{p.name}</h3>
+                      <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">{p.name}</h3>
                       <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-zinc-500">
                         <Clock className="h-3 w-3 text-cyan-400" /> {p.durationDays} Days Duration
                       </div>
@@ -147,7 +147,7 @@ export default function PlansPage() {
                   </div>
 
                   <div className="mb-4">
-                    <span className="text-2xl font-extrabold text-white">₹{p.price}</span>
+                    <span className="text-2xl font-extrabold text-zinc-100">₹{p.price}</span>
                     <span className="text-[10px] text-zinc-500 ml-1 font-medium">net price</span>
                   </div>
 
@@ -163,7 +163,7 @@ export default function PlansPage() {
         {/* Add Plan Card */}
         {isAdding ? (
           <div className="rounded-2xl border border-cyan-800 bg-zinc-950/70 p-6 shadow-2xl shadow-cyan-950/10 h-fit lg:col-span-1">
-            <h3 className="text-base font-bold text-white mb-4">Create Membership Plan</h3>
+            <h3 className="text-base font-bold text-zinc-100 mb-4">Create Membership Plan</h3>
             
             {error && (
               <div className="mb-4 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs font-semibold text-rose-400">
@@ -180,7 +180,7 @@ export default function PlansPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -193,7 +193,7 @@ export default function PlansPage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     required
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -202,7 +202,7 @@ export default function PlansPage() {
                   <select
                     value={durationDays}
                     onChange={(e) => setDurationDays(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 focus:outline-none focus:border-cyan-500"
                   >
                     <option value="30">30 Days (Monthly)</option>
                     <option value="90">90 Days (Quarterly)</option>
@@ -219,7 +219,7 @@ export default function PlansPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                  className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
@@ -243,13 +243,13 @@ export default function PlansPage() {
         ) : (
           <div className="rounded-2xl border border-dashed border-zinc-800 p-8 flex flex-col items-center justify-center text-center text-zinc-500 lg:col-span-1 h-64">
             <Activity className="h-10 w-10 text-zinc-700 mb-2" />
-            <h4 className="text-sm font-bold text-white font-sans">Custom Plans Builder</h4>
+            <h4 className="text-sm font-bold text-zinc-100 font-sans">Custom Plans Builder</h4>
             <p className="text-xs text-zinc-500 mt-1 max-w-[200px] leading-relaxed">
               Define customized durations and distinct pricing plans for your members.
             </p>
             <button
               onClick={() => setIsAdding(true)}
-              className="mt-4 rounded-xl border border-zinc-850 px-4 py-2 text-xs font-semibold text-cyan-400 hover:bg-zinc-900 hover:text-white transition-all"
+              className="mt-4 rounded-xl border border-zinc-850 px-4 py-2 text-xs font-semibold text-cyan-400 hover:bg-zinc-900 hover:text-zinc-100 transition-all"
             >
               Build New Plan
             </button>

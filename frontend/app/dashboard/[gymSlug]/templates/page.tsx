@@ -462,7 +462,7 @@ export default function MessageTemplatesPage() {
       {/* Main Header Row */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl flex items-center gap-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl flex items-center gap-2">
             <FileText className="h-7 w-7 text-cyan-400" />
             Message Templates
           </h2>
@@ -505,7 +505,7 @@ export default function MessageTemplatesPage() {
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3 backdrop-blur-md">
           <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <span className="block font-bold text-white text-xs">WhatsApp Integration Not Connected</span>
+            <span className="block font-bold text-zinc-100 text-xs">WhatsApp Integration Not Connected</span>
             <p className="text-[11px] text-zinc-400 leading-relaxed max-w-2xl">
               To submit templates to Meta for approval, you must first connect and verify your WhatsApp Business Account.
             </p>
@@ -534,7 +534,7 @@ export default function MessageTemplatesPage() {
               placeholder="Search templates..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 py-2.5 pl-10 pr-4 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 transition-all"
             />
           </div>
 
@@ -548,7 +548,7 @@ export default function MessageTemplatesPage() {
                   setIsStatusOpen(!isStatusOpen);
                   setIsCategoryOpen(false);
                 }}
-                className="w-full text-left flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white transition-all focus:outline-none focus:border-cyan-500"
+                className="w-full text-left flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-zinc-100 transition-all focus:outline-none focus:border-cyan-500"
               >
                 <span>
                   {statusOptions.find((o) => o.value === statusFilter)?.label || 'All Statuses'}
@@ -568,7 +568,7 @@ export default function MessageTemplatesPage() {
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                         statusFilter === opt.value
                           ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
-                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+                          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
                       }`}
                     >
                       {opt.label}
@@ -586,7 +586,7 @@ export default function MessageTemplatesPage() {
                   setIsCategoryOpen(!isCategoryOpen);
                   setIsStatusOpen(false);
                 }}
-                className="w-full text-left flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-white transition-all focus:outline-none focus:border-cyan-500"
+                className="w-full text-left flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 px-4 py-2.5 text-xs font-semibold text-zinc-300 hover:text-zinc-100 transition-all focus:outline-none focus:border-cyan-500"
               >
                 <span>
                   {categoryOptions.find((o) => o.value === categoryFilter)?.label || 'All Categories'}
@@ -606,7 +606,7 @@ export default function MessageTemplatesPage() {
                       className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                         categoryFilter === opt.value
                           ? 'bg-cyan-500/10 text-cyan-400 font-semibold'
-                          : 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
+                          : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
                       }`}
                     >
                       {opt.label}
@@ -618,7 +618,7 @@ export default function MessageTemplatesPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-zinc-900 pt-3 md:border-none md:pt-0 shrink-0">
+        <div className="flex items-center gap-2 border-t border-zinc-800 pt-3 md:border-none md:pt-0 shrink-0">
           <span className="text-zinc-500 font-semibold mr-1">View:</span>
           <button
             onClick={() => setViewMode('grid')}
@@ -655,7 +655,7 @@ export default function MessageTemplatesPage() {
             <FileText className="h-6 w-6" />
           </div>
           <div className="space-y-1 max-w-sm">
-            <span className="block font-bold text-white text-sm">No Templates Found</span>
+            <span className="block font-bold text-zinc-100 text-sm">No Templates Found</span>
             <p className="text-xs text-zinc-500 leading-relaxed">
               {searchTerm || statusFilter !== 'ALL' || categoryFilter !== 'ALL'
                 ? 'No templates match your selected filters. Try updating your criteria.'
@@ -688,13 +688,13 @@ export default function MessageTemplatesPage() {
           {filteredTemplates.map((t) => (
             <div
               key={t.id}
-              className="group relative rounded-2xl border border-zinc-900 bg-zinc-950/60 p-5 flex flex-col justify-between backdrop-blur-md"
+              className="group relative rounded-2xl border border-zinc-800 bg-zinc-950/60 p-5 flex flex-col justify-between backdrop-blur-md"
             >
               <div className="space-y-4">
                 {/* Template Card Top Bar */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-0.5 overflow-hidden">
-                    <span className="font-extrabold text-sm text-white block truncate tracking-tight">
+                    <span className="font-extrabold text-sm text-zinc-100 block truncate tracking-tight">
                       {t.templateName}
                     </span>
                     <div className="flex flex-wrap gap-1.5 items-center mt-1">
@@ -724,7 +724,7 @@ export default function MessageTemplatesPage() {
               </div>
 
               {/* Template Card Bottom Actions Bar */}
-              <div className="flex items-center justify-between gap-2 border-t border-zinc-900/70 pt-4 mt-5">
+              <div className="flex items-center justify-between gap-2 border-t border-zinc-800/70 pt-4 mt-5">
                 <button
                   onClick={() => setSelectedTemplate(t)}
                   className="flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-bold tracking-tight transition-all"
@@ -746,7 +746,7 @@ export default function MessageTemplatesPage() {
                     <button
                       onClick={() => handleSyncTemplateStatus(t.id)}
                       disabled={actionInProgressId !== null}
-                      className="flex items-center justify-center p-1.5 rounded-lg border border-zinc-850 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white transition-all disabled:opacity-50"
+                      className="flex items-center justify-center p-1.5 rounded-lg border border-zinc-850 bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-100 transition-all disabled:opacity-50"
                       title="Sync Approval Status"
                     >
                       <RefreshCcw className={`h-3.5 w-3.5 ${actionInProgressId === t.id ? 'animate-spin' : ''}`} />
@@ -775,11 +775,11 @@ export default function MessageTemplatesPage() {
         </div>
       ) : (
         /* LIST VIEW MODE */
-        <div className="rounded-2xl border border-zinc-900 bg-zinc-950/60 overflow-hidden backdrop-blur-md">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 overflow-hidden backdrop-blur-md">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="border-b border-zinc-900 bg-zinc-900/30 text-zinc-500 uppercase tracking-widest text-[9px] font-black">
+                <tr className="border-b border-zinc-800 bg-zinc-900/30 text-zinc-500 uppercase tracking-widest text-[9px] font-black">
                   <th className="p-4">Template Name</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Language</th>
@@ -788,10 +788,10 @@ export default function MessageTemplatesPage() {
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-900">
+              <tbody className="divide-y divide-zinc-800">
                 {filteredTemplates.map((t) => (
                   <tr key={t.id} className="hover:bg-zinc-900/20 transition-all text-zinc-300">
-                    <td className="p-4 font-bold text-white">{t.templateName}</td>
+                    <td className="p-4 font-bold text-zinc-100">{t.templateName}</td>
                     <td className="p-4">
                       <span className="rounded bg-zinc-900 border border-zinc-850 px-2 py-0.5 font-semibold uppercase tracking-wider text-[10px]">
                         {t.category}
@@ -835,7 +835,7 @@ export default function MessageTemplatesPage() {
                           <button
                             onClick={() => handleSyncTemplateStatus(t.id)}
                             disabled={actionInProgressId !== null}
-                            className="p-1 border border-zinc-800 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-all disabled:opacity-50"
+                            className="p-1 border border-zinc-800 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-all disabled:opacity-50"
                             title="Sync Status"
                           >
                             <RefreshCcw className={`h-3.5 w-3.5 ${actionInProgressId === t.id ? 'animate-spin' : ''}`} />
@@ -882,16 +882,16 @@ export default function MessageTemplatesPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="relative w-full max-w-xl max-h-[90vh] bg-zinc-950 border border-zinc-900 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
+                className="relative w-full max-w-xl max-h-[90vh] bg-zinc-950 border border-zinc-800 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
               >
                 {/* Decorative glows */}
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
                 <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
                 {/* Drawer Header */}
-                <div className="flex items-center justify-between border-b border-zinc-900/60 p-5 relative z-10 bg-zinc-950/40">
+                <div className="flex items-center justify-between border-b border-zinc-800/60 p-5 relative z-10 bg-zinc-950/40">
                   <div>
-                    <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 uppercase tracking-wide">
+                    <h3 className="font-extrabold text-sm text-zinc-100 flex items-center gap-1.5 uppercase tracking-wide">
                       <Eye className="h-4 w-4 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
                       Template Preview
                     </h3>
@@ -899,7 +899,7 @@ export default function MessageTemplatesPage() {
                   </div>
                   <button
                     onClick={() => setSelectedTemplate(null)}
-                    className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all"
+                    className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-all"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -909,22 +909,22 @@ export default function MessageTemplatesPage() {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10">
                   {/* Meta details cards */}
                   <div className="grid grid-cols-4 gap-2.5">
-                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                    <div className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
                       <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Approval Status</span>
                       {getStatusBadge(selectedTemplate.status)}
                     </div>
                     
-                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                    <div className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
                       <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Template Category</span>
                       <span className="font-bold text-zinc-100 mt-1 block uppercase text-[10px] truncate" title={selectedTemplate.category}>{selectedTemplate.category}</span>
                     </div>
                     
-                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                    <div className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
                       <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Language Code</span>
                       <span className="font-bold text-zinc-300 mt-1 block uppercase text-[10px] truncate" title={selectedTemplate.language}>{selectedTemplate.language}</span>
                     </div>
                     
-                    <div className="bg-zinc-900/40 border border-zinc-900 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
+                    <div className="bg-zinc-900/40 border border-zinc-800 hover:border-zinc-800/80 rounded-xl p-2.5 flex flex-col justify-between transition-all duration-300">
                       <span className="text-zinc-500 text-[9px] uppercase tracking-wider font-semibold">Meta ID</span>
                       <span className="font-mono text-zinc-400 mt-1 block truncate text-[10px]" title={selectedTemplate.metaTemplateId || 'N/A'}>
                         {selectedTemplate.metaTemplateId || 'Not registered'}
@@ -1063,7 +1063,7 @@ export default function MessageTemplatesPage() {
                 </div>
 
                 {/* Drawer Footer Actions */}
-                <div className="border-t border-zinc-900/60 p-5 bg-[#0b0b0f]/60 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
+                <div className="border-t border-zinc-800/60 p-5 bg-[#0b0b0f]/60 backdrop-blur-md flex items-center justify-between gap-3 relative z-10">
                   <button
                     onClick={() => setSelectedTemplate(null)}
                     className="w-full flex items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 neon-btn-secondary"
@@ -1122,16 +1122,16 @@ export default function MessageTemplatesPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="relative w-full max-w-4xl max-h-[90vh] bg-zinc-950 border border-zinc-900 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
+                className="relative w-full max-w-4xl max-h-[90vh] bg-zinc-950 border border-zinc-800 shadow-2xl rounded-2xl flex flex-col justify-between overflow-hidden pointer-events-auto"
               >
                 {/* Decorative glows */}
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
                 <div className="absolute -left-20 -bottom-20 h-48 w-48 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
                 {/* Drawer Header */}
-                <div className="flex items-center justify-between border-b border-zinc-900 p-5 relative z-10 bg-zinc-950/40">
+                <div className="flex items-center justify-between border-b border-zinc-800 p-5 relative z-10 bg-zinc-950/40">
                   <div>
-                    <h3 className="font-extrabold text-sm text-white flex items-center gap-1.5 uppercase tracking-wide">
+                    <h3 className="font-extrabold text-sm text-zinc-100 flex items-center gap-1.5 uppercase tracking-wide">
                       <Sparkles className="h-4 w-4 text-cyan-400 animate-pulse" />
                       Create Message Template
                     </h3>
@@ -1139,7 +1139,7 @@ export default function MessageTemplatesPage() {
                   </div>
                   <button
                     onClick={() => setIsCreateOpen(false)}
-                    className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-white transition-all"
+                    className="rounded-lg p-1.5 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-all"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1148,7 +1148,7 @@ export default function MessageTemplatesPage() {
                 {/* Drawer Scrollable Form Content & Live Preview Split */}
                 <form onSubmit={handleCreateDraft} className="flex-1 overflow-hidden flex flex-col md:flex-row text-xs text-zinc-300 relative z-10">
                   {/* Left Column: Form Fields (scrollable) */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 border-r border-zinc-900/60">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-6 border-r border-zinc-800/60">
                   {/* 1. Template Name */}
                   <div className="space-y-1.5">
                     <label className="block font-bold text-zinc-400 uppercase tracking-widest text-[9px]">
@@ -1160,7 +1160,7 @@ export default function MessageTemplatesPage() {
                       placeholder="e.g. welcome_member"
                       value={formName}
                       onChange={(e) => handleNameInput(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-650 focus:outline-none focus:border-cyan-500 font-mono tracking-tight"
+                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-cyan-500 font-mono tracking-tight"
                     />
                     <p className="text-[10px] text-zinc-500">
                       Lower-case alphanumeric values and underscores only. Spaces and hyphens auto-converted.
@@ -1176,7 +1176,7 @@ export default function MessageTemplatesPage() {
                       <select
                         value={formCategory}
                         onChange={(e) => setFormCategory(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                        className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 focus:outline-none focus:border-cyan-500 cursor-pointer"
                       >
                         <option value="UTILITY">Utility (Reminders, Alert)</option>
                         <option value="MARKETING">Marketing (Offer, News)</option>
@@ -1191,7 +1191,7 @@ export default function MessageTemplatesPage() {
                       <select
                         value={formLanguage}
                         onChange={(e) => setFormLanguage(e.target.value)}
-                        className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                        className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 focus:outline-none focus:border-cyan-500 cursor-pointer"
                       >
                         <option value="en_US">English (US) - en_US</option>
                         <option value="en_GB">English (UK) - en_GB</option>
@@ -1242,7 +1242,7 @@ export default function MessageTemplatesPage() {
                           value={formHeaderText}
                           onChange={(e) => setFormHeaderText(e.target.value)}
                           maxLength={60}
-                          className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
+                          className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500"
                         />
                       </div>
                     )}
@@ -1291,7 +1291,7 @@ export default function MessageTemplatesPage() {
                       placeholder="Enter main message body...&#10;e.g. Hello {{1}}, your membership at {{2}} is active!"
                       value={formBody}
                       onChange={(e) => setFormBody(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
+                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cyan-500 leading-relaxed font-sans"
                     />
                     <div className="flex items-start gap-1 text-[10px] text-zinc-500">
                       <Info className="h-3.5 w-3.5 text-cyan-500 shrink-0 mt-0.5" />
@@ -1312,7 +1312,7 @@ export default function MessageTemplatesPage() {
                       value={formFooter}
                       onChange={(e) => setFormFooter(e.target.value)}
                       maxLength={60}
-                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-650 focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-xl border border-zinc-850 bg-zinc-900 px-4 py-3 text-zinc-100 placeholder-zinc-650 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
 
@@ -1338,7 +1338,7 @@ export default function MessageTemplatesPage() {
                         {formButtons.map((btn, idx) => (
                           <div
                             key={btn.id}
-                            className="rounded-xl border border-zinc-900 bg-zinc-900/10 p-3.5 space-y-3 text-xs"
+                            className="rounded-xl border border-zinc-800 bg-zinc-900/10 p-3.5 space-y-3 text-xs"
                           >
                             <div className="flex items-center justify-between gap-3">
                               <span className="font-extrabold text-[10px] text-zinc-500 uppercase tracking-wider">
@@ -1361,7 +1361,7 @@ export default function MessageTemplatesPage() {
                                 <select
                                   value={btn.type}
                                   onChange={(e) => handleUpdateButton(btn.id, 'type', e.target.value as any)}
-                                  className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500 cursor-pointer"
+                                  className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2 py-1.5 text-[10px] text-zinc-100 focus:outline-none focus:border-cyan-500 cursor-pointer"
                                 >
                                   <option value="QUICK_REPLY">Quick Reply</option>
                                   <option value="URL">Visit URL</option>
@@ -1380,7 +1380,7 @@ export default function MessageTemplatesPage() {
                                   placeholder="Button Label"
                                   value={btn.text}
                                   onChange={(e) => handleUpdateButton(btn.id, 'text', e.target.value)}
-                                  className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500"
+                                  className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2 py-1.5 text-[10px] text-zinc-100 focus:outline-none focus:border-cyan-500"
                                 />
                               </div>
 
@@ -1395,7 +1395,7 @@ export default function MessageTemplatesPage() {
                                     placeholder={btn.type === 'URL' ? 'https://example.com' : '+155500000'}
                                     value={btn.value}
                                     onChange={(e) => handleUpdateButton(btn.id, 'value', e.target.value)}
-                                    className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2.5 py-1.5 text-[10px] text-white focus:outline-none focus:border-cyan-500 font-mono"
+                                    className="w-full rounded-lg border border-zinc-850 bg-zinc-900 px-2.5 py-1.5 text-[10px] text-zinc-100 focus:outline-none focus:border-cyan-500 font-mono"
                                   />
                                 </div>
                               )}
@@ -1412,7 +1412,7 @@ export default function MessageTemplatesPage() {
                   </div>
 
                   {/* Right Column: Live Smartphone Preview */}
-                  <div className="w-full md:w-[340px] shrink-0 bg-zinc-950/20 p-6 flex flex-col items-center justify-center overflow-y-auto border-l border-zinc-900/60">
+                  <div className="w-full md:w-[340px] shrink-0 bg-zinc-950/20 p-6 flex flex-col items-center justify-center overflow-y-auto border-l border-zinc-800/60">
                     <div className="flex items-center gap-1.5 self-start mb-4">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#00a884] animate-pulse" />
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Live WhatsApp Preview</span>
@@ -1537,14 +1537,14 @@ export default function MessageTemplatesPage() {
                 </form>
 
                 {/* Drawer Footer Actions */}
-                <div className="border-t border-zinc-900 p-5 bg-zinc-950/60 flex items-center justify-between gap-3 shrink-0 relative z-10">
+                <div className="border-t border-zinc-800 p-5 bg-zinc-950/60 flex items-center justify-between gap-3 shrink-0 relative z-10">
                   <button
                     type="button"
                     onClick={() => {
                       resetForm();
                       setIsCreateOpen(false);
                     }}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-xs font-bold text-zinc-400 hover:text-white transition-all"
+                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-xs font-bold text-zinc-400 hover:text-zinc-100 transition-all"
                   >
                     Cancel
                   </button>

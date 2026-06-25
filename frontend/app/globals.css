@@ -7,7 +7,7 @@
   --surface-1: #121a2b;
   --surface-2: #182235;
   --surface-3: #1d2940;
-  --border: #2a3854;
+  --border: #334366;
 
   --text-primary: #f8fafc;
   --text-secondary: #dce6f4;
@@ -76,7 +76,7 @@ body {
   --surface-1: #121a2b;
   --surface-2: #182235;
   --surface-3: #1d2940;
-  --border: #2a3854;
+  --border: #334366;
 
   --text-primary: #f8fafc;
   --text-secondary: #dce6f4;
@@ -103,7 +103,7 @@ body {
   --surface-1: #ffffff;
   --surface-2: #f8fafc;
   --surface-3: #ffffff;
-  --border: #e2e8f0;
+  --border: #cbd5e1;
 
   --text-primary: #0f172a;
   --text-secondary: #334155;
@@ -130,7 +130,7 @@ body {
   --surface-1: #dcebfa;   /* sidebar / topbar background */
   --surface-2: #ffffff;   /* cards / inputs */
   --surface-3: #ffffff;
-  --border: #c7d7ee;
+  --border: #b4cbe8;
 
   --text-primary: #0f172a;
   --text-secondary: #243447;

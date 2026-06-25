@@ -500,7 +500,7 @@ export default function WhatsAppSetupPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+          <h2 className="text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl">
             WhatsApp Integrations
           </h2>
           <p className="text-xs text-zinc-500 mt-1">
@@ -584,7 +584,7 @@ export default function WhatsAppSetupPage() {
                             setVerificationCode(e.target.value.replace(/\D/g, ""))
                           }
                           placeholder="123456"
-                          className="w-40 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-white placeholder-zinc-700 font-mono tracking-widest focus:outline-none focus:border-cyan-500"
+                          className="w-40 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 placeholder-zinc-700 font-mono tracking-widest focus:outline-none focus:border-cyan-500"
                         />
                         <button
                           onClick={handleVerifyCode}
@@ -616,7 +616,7 @@ export default function WhatsAppSetupPage() {
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">
                   Meta Verification
                 </span>
-                <span className="text-sm font-bold text-white flex items-center gap-2 mt-1">
+                <span className="text-sm font-bold text-zinc-100 flex items-center gap-2 mt-1">
                   {config.whatsappVerificationStatus === "VERIFIED" ? (
                     <>
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -636,7 +636,7 @@ export default function WhatsAppSetupPage() {
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">
                   Quality Rating
                 </span>
-                <span className="text-sm font-bold text-white flex items-center gap-2 mt-1">
+                <span className="text-sm font-bold text-zinc-100 flex items-center gap-2 mt-1">
                   {config.whatsappQualityRating === "GREEN" ? (
                     <>
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -666,7 +666,7 @@ export default function WhatsAppSetupPage() {
                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">
                   Messaging Limit Tier
                 </span>
-                <span className="text-sm font-bold text-white mt-1">
+                <span className="text-sm font-bold text-zinc-100 mt-1">
                   {config.whatsappMessagingTier
                     ? config.whatsappMessagingTier.replace(/_/g, " ")
                     : "Unknown Tier"}
@@ -676,8 +676,8 @@ export default function WhatsAppSetupPage() {
 
             {/* Connection Details */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-6">
-              <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+                <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
                   <Layers className="w-4 h-4 text-cyan-400" />
                   Connection Settings
                 </h3>
@@ -713,7 +713,7 @@ export default function WhatsAppSetupPage() {
                     <span className="text-zinc-500 font-semibold block mb-1">
                       Business Verified Name
                     </span>
-                    <span className="font-bold text-white text-sm">
+                    <span className="font-bold text-zinc-100 text-sm">
                       {config.whatsappVerifiedName || "—"}
                     </span>
                   </div>
@@ -732,7 +732,7 @@ export default function WhatsAppSetupPage() {
                     <span className="text-zinc-500 font-semibold block mb-1">
                       WhatsApp Phone ID
                     </span>
-                    <span className="font-mono text-white text-sm">
+                    <span className="font-mono text-zinc-100 text-sm">
                       {config.phoneNumberId}
                     </span>
                   </div>
@@ -740,7 +740,7 @@ export default function WhatsAppSetupPage() {
                     <span className="text-zinc-500 font-semibold block mb-1">
                       WhatsApp WABA ID
                     </span>
-                    <span className="font-mono text-white text-sm">
+                    <span className="font-mono text-zinc-100 text-sm">
                       {config.wabaId || "—"}
                     </span>
                   </div>
@@ -763,7 +763,7 @@ export default function WhatsAppSetupPage() {
           >
             {/* Header info */}
             <div className="text-center max-w-xl mx-auto space-y-2">
-              <h3 className="text-xl font-bold text-white">Choose Setup Method</h3>
+              <h3 className="text-xl font-bold text-zinc-100">Choose Setup Method</h3>
               <p className="text-xs text-zinc-500">
                 Configure your WhatsApp Business API connection. Access tokens are stored securely encrypted.
               </p>
@@ -797,7 +797,7 @@ export default function WhatsAppSetupPage() {
                     </span>
                   )}
                 </div>
-                <h4 className="font-extrabold text-sm text-white mb-1">Embedded Signup</h4>
+                <h4 className="font-extrabold text-sm text-zinc-100 mb-1">Embedded Signup</h4>
                 <p className="text-xs text-zinc-500 leading-relaxed mb-4">
                   The recommended method. Log in directly using your Meta profile to sync the integration.
                 </p>
@@ -833,7 +833,7 @@ export default function WhatsAppSetupPage() {
                     </span>
                   )}
                 </div>
-                <h4 className="font-extrabold text-sm text-white mb-1">Manual Setup</h4>
+                <h4 className="font-extrabold text-sm text-zinc-100 mb-1">Manual Setup</h4>
                 <p className="text-xs text-zinc-500 leading-relaxed mb-4">
                   Enter your credentials manually. Copy IDs and Permanent Access Tokens from Meta Developer Suite.
                 </p>
@@ -848,8 +848,8 @@ export default function WhatsAppSetupPage() {
             <div className="max-w-2xl mx-auto">
               {setupMethod === "embedded" && (
                 <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-6">
-                  <div className="space-y-1 border-b border-zinc-900 pb-4">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                  <div className="space-y-1 border-b border-zinc-800 pb-4">
+                    <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-1.5">
                       <Smartphone className="w-4 h-4 text-cyan-400" />
                       Configure via Meta popup
                     </h3>
@@ -858,8 +858,8 @@ export default function WhatsAppSetupPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-zinc-900 bg-zinc-950 p-4 space-y-2">
-                    <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4 space-y-2">
+                    <p className="text-xs font-bold text-zinc-100 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-cyan-400" /> Benefits
                     </p>
                     <ul className="text-xs text-zinc-400 space-y-1.5 pl-1">
@@ -928,8 +928,8 @@ export default function WhatsAppSetupPage() {
                   onSubmit={handleSubmit}
                   className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-6 backdrop-blur-md space-y-5"
                 >
-                  <div className="space-y-1 border-b border-zinc-900 pb-4">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                  <div className="space-y-1 border-b border-zinc-800 pb-4">
+                    <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-1.5">
                       <Lock className="w-4 h-4 text-cyan-400" />
                       Manual Configuration Form
                     </h3>
@@ -956,7 +956,7 @@ export default function WhatsAppSetupPage() {
                       placeholder="e.g. 123456789012345"
                       value={form.wabaId}
                       onChange={(e) => setForm({ ...form, wabaId: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
 
@@ -971,7 +971,7 @@ export default function WhatsAppSetupPage() {
                       placeholder="e.g. 987654321098765"
                       value={form.phoneNumberId}
                       onChange={(e) => setForm({ ...form, phoneNumberId: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-cyan-500"
                     />
                   </div>
 
@@ -988,7 +988,7 @@ export default function WhatsAppSetupPage() {
                       placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxx..."
                       value={form.accessToken}
                       onChange={(e) => setForm({ ...form, accessToken: e.target.value })}
-                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-white placeholder-zinc-700 font-mono focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-700 font-mono focus:outline-none focus:border-cyan-500"
                     />
                   </div>
 
