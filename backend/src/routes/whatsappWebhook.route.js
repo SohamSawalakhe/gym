@@ -40,7 +40,10 @@ router.post("/", async (req, res) => {
   res.sendStatus(200);
 
   try {
-    console.log("📥 Received Webhook Event Raw Body:", JSON.stringify(body, null, 2));
+    console.log(
+      "📥 Received Webhook Event Raw Body:",
+      JSON.stringify(body, null, 2),
+    );
 
     const entry = body.entry?.[0];
     const change = entry?.changes?.[0];
@@ -51,10 +54,112 @@ router.post("/", async (req, res) => {
       return;
     }
 
+    const field = change?.field;
+
+    /* =====================================================
+       0. PHONE NUMBER NAME UPDATE
+       ===================================================== */
+    if (field === "phone_number_name_update") {
+      console.log(`📝 Received phone_number_name_update webhook:`, value);
+      const decision = value.decision; // APPROVED or REJECTED
+      const rejectionReason = value.rejection_reason || null;
+
+      // Find the active history request by looking at all active ones
+      // (since the webhook might only have display_phone_number or WABA ID)
+      // WABA ID is entry[0].id
+      const wabaId = entry?.id;
+
+      let gyms = [];
+      if (wabaId) {
+        gyms = await prisma.gym.findMany({
+          where: { whatsapp_waba_id: wabaId },
+        });
+      }
+
+      if (gyms.length > 0) {
+        for (const g of gyms) {
+          const activeRequest =
+            await prisma.whatsAppDisplayNameHistory.findFirst({
+              where: { gymId: g.id, isActive: true },
+            });
+
+          if (activeRequest) {
+            if (
+              activeRequest.status === "APPROVED" ||
+              activeRequest.status === "DECLINED"
+            ) {
+              console.log(
+                `ℹ️ Webhook idempotency: Request for gym ${g.id} already processed.`,
+              );
+              continue;
+            }
+
+            if (decision === "APPROVED") {
+              await prisma.$transaction([
+                prisma.gym.update({
+                  where: { id: g.id },
+                  data: {
+                    pendingNameStatus: "REGISTERING",
+                  },
+                }),
+                prisma.whatsAppDisplayNameHistory.update({
+                  where: { id: activeRequest.id },
+                  data: {
+                    status: "APPROVED",
+                    approvedAt: new Date(),
+                  },
+                }),
+              ]);
+
+              // Queue BullMQ job for registration
+              const { whatsappQueue } = await import("../lib/queue.js");
+              await whatsappQueue.add(
+                "register-phone-number",
+                {
+                  gymId: g.id,
+                  phoneNumberId: g.whatsapp_phone_number_id,
+                  accessToken: (await import("../utils/encryption.js")).decrypt(
+                    g.whatsapp_access_token,
+                  ),
+                },
+                {
+                  attempts: 4,
+                  backoff: {
+                    type: "exponential",
+                    delay: 30000, // 30s, 60s, 120s
+                  },
+                },
+              );
+            } else if (decision === "REJECTED") {
+              await prisma.$transaction([
+                prisma.gym.update({
+                  where: { id: g.id },
+                  data: {
+                    pendingNameStatus: "DECLINED",
+                  },
+                }),
+                prisma.whatsAppDisplayNameHistory.update({
+                  where: { id: activeRequest.id },
+                  data: {
+                    status: "DECLINED",
+                    rejectionReason,
+                    isActive: false,
+                  },
+                }),
+              ]);
+            }
+          }
+        }
+      }
+      return;
+    }
+
     // Resolve matching Gym tenant by Meta Phone Number ID
     const phoneNumberId = value.metadata?.phone_number_id;
     if (!phoneNumberId) {
-      console.log("ℹ️ Webhook payload ignored (no 'phone_number_id' in metadata).");
+      console.log(
+        "ℹ️ Webhook payload ignored (no 'phone_number_id' in metadata).",
+      );
       return;
     }
 
@@ -64,7 +169,9 @@ router.post("/", async (req, res) => {
     });
 
     if (gyms.length === 0) {
-      console.warn(`⚠️ Received WhatsApp webhook for unregistered Phone ID: ${phoneNumberId}`);
+      console.warn(
+        `⚠️ Received WhatsApp webhook for unregistered Phone ID: ${phoneNumberId}`,
+      );
       return;
     }
 
@@ -78,20 +185,20 @@ router.post("/", async (req, res) => {
         const matchingMember = await prisma.member.findFirst({
           where: {
             phone: phoneToMatch,
-            gymId: { in: gyms.map(g => g.id) }
-          }
+            gymId: { in: gyms.map((g) => g.id) },
+          },
         });
         if (matchingMember) {
-          resolvedGym = gyms.find(g => g.id === matchingMember.gymId);
+          resolvedGym = gyms.find((g) => g.id === matchingMember.gymId);
         }
       } else if (value.statuses?.length) {
         const messageId = value.statuses[0].id;
         const matchingMessage = await prisma.whatsAppMessage.findUnique({
           where: { messageId },
-          select: { gymId: true }
+          select: { gymId: true },
         });
         if (matchingMessage) {
-          resolvedGym = gyms.find(g => g.id === matchingMessage.gymId);
+          resolvedGym = gyms.find((g) => g.id === matchingMessage.gymId);
         }
       }
 
@@ -100,13 +207,17 @@ router.post("/", async (req, res) => {
       }
     }
 
-    console.log(`🏢 Resolved Gym Tenant: "${gym.name}" (Slug: ${gym.slug}) for Phone ID: ${phoneNumberId}`);
+    console.log(
+      `🏢 Resolved Gym Tenant: "${gym.name}" (Slug: ${gym.slug}) for Phone ID: ${phoneNumberId}`,
+    );
 
     /* =====================================================
        1. CUSTOMER MESSAGES (INBOUND)
        ===================================================== */
     if (value.messages?.length) {
-      console.log(`💬 Processing ${value.messages.length} inbound message(s)...`);
+      console.log(
+        `💬 Processing ${value.messages.length} inbound message(s)...`,
+      );
       for (const msg of value.messages) {
         const messageId = msg.id;
         const senderPhone = msg.from;
@@ -118,14 +229,19 @@ router.post("/", async (req, res) => {
           text = msg.text?.body || "";
         } else if (msg.type === "interactive") {
           const interactive = msg.interactive;
-          text = interactive?.button_reply?.title || interactive?.list_reply?.title || "[interactive]";
+          text =
+            interactive?.button_reply?.title ||
+            interactive?.list_reply?.title ||
+            "[interactive]";
         } else if (msg.type === "button") {
           text = msg.button?.text || "";
         } else {
           text = `[${msg.type} message]`;
         }
 
-        console.log(`📥 Message: "${text}" from ${senderPhone} to display # ${recipientPhone} (ID: ${messageId})`);
+        console.log(
+          `📥 Message: "${text}" from ${senderPhone} to display # ${recipientPhone} (ID: ${messageId})`,
+        );
 
         // Check for duplicate messages (idempotency check)
         const exists = await prisma.whatsAppMessage.findUnique({
@@ -136,7 +252,11 @@ router.post("/", async (req, res) => {
           let textPayload = text;
 
           // Handle incoming media files (image, video, audio, document, sticker)
-          if (["image", "video", "audio", "document", "sticker"].includes(msg.type)) {
+          if (
+            ["image", "video", "audio", "document", "sticker"].includes(
+              msg.type,
+            )
+          ) {
             const mediaObj = msg[msg.type];
             const mediaId = mediaObj?.id;
             const mimeType = mediaObj?.mime_type || "";
@@ -144,49 +264,58 @@ router.post("/", async (req, res) => {
 
             if (mediaId) {
               const mediaUrl = `/api/media/${gym.slug}/${mediaId}`;
-              
+
               textPayload = JSON.stringify({
                 mediaUrl,
                 mimeType,
-                caption
+                caption,
               });
 
-              console.log(`🔗 Mapped incoming media (Type: ${msg.type}) to public proxy URL: ${mediaUrl}`);
-              
+              console.log(
+                `🔗 Mapped incoming media (Type: ${msg.type}) to public proxy URL: ${mediaUrl}`,
+              );
+
               // Update local display text for logs and console
               text = caption || `[${msg.type} message]`;
             }
           }
 
           // Extract WhatsApp profile name
-          const contactObj = value.contacts?.find((c) => c.wa_id === senderPhone) || value.contacts?.[0];
+          const contactObj =
+            value.contacts?.find((c) => c.wa_id === senderPhone) ||
+            value.contacts?.[0];
           const profileName = contactObj?.profile?.name || null;
 
           // Find member
           let member = await prisma.member.findFirst({
             where: {
               gymId: gym.id,
-              phone: senderPhone
-            }
+              phone: senderPhone,
+            },
           });
 
           if (member) {
             // Update existing member's whatsappName and optionally memberName if it's currently a phone number
             const cleanMemberName = member.memberName.replace(/[+\-\s()]/g, "");
-            const isPhoneOnly = /^\d+$/.test(cleanMemberName) || cleanMemberName === member.phone;
+            const isPhoneOnly =
+              /^\d+$/.test(cleanMemberName) || cleanMemberName === member.phone;
 
             const updateData = {};
             if (profileName && profileName !== member.whatsappName) {
               updateData.whatsappName = profileName;
             }
-            if (profileName && isPhoneOnly && profileName !== member.memberName) {
+            if (
+              profileName &&
+              isPhoneOnly &&
+              profileName !== member.memberName
+            ) {
               updateData.memberName = profileName;
             }
 
             if (Object.keys(updateData).length > 0) {
               member = await prisma.member.update({
                 where: { id: member.id },
-                data: updateData
+                data: updateData,
               });
             }
           }
@@ -209,7 +338,9 @@ router.post("/", async (req, res) => {
           try {
             const io = getIO();
             io.to(`gym:${gym.id}`).emit("whatsapp:message", incomingMessage);
-            console.log(`🔌 Emitted websocket event "whatsapp:message" for Gym ID: ${gym.id}`);
+            console.log(
+              `🔌 Emitted websocket event "whatsapp:message" for Gym ID: ${gym.id}`,
+            );
 
             if (member) {
               // Parse message text if it is a media JSON payload
@@ -240,16 +371,21 @@ router.post("/", async (req, res) => {
                 caption,
                 direction: "inbound",
                 status: "received",
-                createdAt: incomingMessage.createdAt
+                createdAt: incomingMessage.createdAt,
               };
               io.to(`conversation:${member.id}`).emit("message:new", mappedMsg);
             }
             io.to(`gym:${gym.id}`).emit("inbox:update");
           } catch (wsErr) {
-            console.error("❌ Failed to emit WhatsApp WebSocket event:", wsErr.message);
+            console.error(
+              "❌ Failed to emit WhatsApp WebSocket event:",
+              wsErr.message,
+            );
           }
         } else {
-          console.log(`ℹ️ Duplicate message detected (ID: ${messageId}), skipping database insert.`);
+          console.log(
+            `ℹ️ Duplicate message detected (ID: ${messageId}), skipping database insert.`,
+          );
         }
       }
     }
@@ -265,7 +401,9 @@ router.post("/", async (req, res) => {
         const errorCode = statusObj.errors?.[0]?.code;
         const errorMessage = statusObj.errors?.[0]?.message || null;
 
-        console.log(`📈 Outbound Status ID: ${messageId} -> State: "${metaState}" (ErrorCode: ${errorCode || "none"})`);
+        console.log(
+          `📈 Outbound Status ID: ${messageId} -> State: "${metaState}" (ErrorCode: ${errorCode || "none"})`,
+        );
 
         // Try to update existing database message status
         const message = await prisma.whatsAppMessage.findUnique({
@@ -280,7 +418,9 @@ router.post("/", async (req, res) => {
               errorMessage: errorMessage || null,
             },
           });
-          console.log(`💾 Updated status in DB for message ${messageId} to ${metaState.toUpperCase()}`);
+          console.log(
+            `💾 Updated status in DB for message ${messageId} to ${metaState.toUpperCase()}`,
+          );
 
           // Log raw event for auditing since the message exists
           await prisma.whatsAppEvent.create({
@@ -291,9 +431,13 @@ router.post("/", async (req, res) => {
               rawPayload: statusObj,
             },
           });
-          console.log(`💾 Logged raw WhatsApp event for message ID: ${messageId}`);
+          console.log(
+            `💾 Logged raw WhatsApp event for message ID: ${messageId}`,
+          );
         } else {
-          console.log(`⚠️ No matching outbound message found in DB for Status ID: ${messageId}. Skipping status update and event logging.`);
+          console.log(
+            `⚠️ No matching outbound message found in DB for Status ID: ${messageId}. Skipping status update and event logging.`,
+          );
         }
 
         // Trigger WebSocket updates for status changes
@@ -306,24 +450,29 @@ router.post("/", async (req, res) => {
               errorCode,
               errorMessage,
             });
-            console.log(`🔌 Emitted websocket event "whatsapp:status" for Gym ID: ${gym.id}`);
+            console.log(
+              `🔌 Emitted websocket event "whatsapp:status" for Gym ID: ${gym.id}`,
+            );
 
             // Emit to inbox conversation and update lists
             const member = await prisma.member.findFirst({
               where: {
                 gymId: gym.id,
-                phone: message.recipientPhone
-              }
+                phone: message.recipientPhone,
+              },
             });
             if (member) {
               io.to(`conversation:${member.id}`).emit("message:status", {
                 whatsappMessageId: messageId,
-                status: metaState.toLowerCase()
+                status: metaState.toLowerCase(),
               });
             }
             io.to(`gym:${gym.id}`).emit("inbox:update");
           } catch (wsErr) {
-            console.error("❌ Failed to emit status update WebSocket event:", wsErr.message);
+            console.error(
+              "❌ Failed to emit status update WebSocket event:",
+              wsErr.message,
+            );
           }
         }
       }

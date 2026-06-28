@@ -27,6 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import BusinessProfileForm from "@/components/whatsapp/BusinessProfileForm";
+import DisplayNameManager from "@/components/whatsapp/DisplayNameManager";
 
 type WhatsAppStatus = "not_configured" | "connected" | "error";
 type SetupMethod = "embedded" | "manual";
@@ -130,9 +131,10 @@ export default function WhatsAppSetupPage() {
 
   /* ================= LOAD STATUS ================= */
 
-  async function loadStatus() {
+  async function loadStatus(forceMetaCheck: boolean = false) {
     try {
-      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/status`);
+      const query = forceMetaCheck ? "?forceMetaCheck=true" : "";
+      const res = await fetch(`/api/dashboard/${gymSlug}/whatsapp/status${query}`);
       if (!res.ok) {
         throw new Error("Failed to load WhatsApp status");
       }
@@ -756,6 +758,11 @@ export default function WhatsAppSetupPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Display Name Management */}
+            <div className="mt-8">
+              <DisplayNameManager gymSlug={gymSlug} config={config} onRefresh={loadStatus} />
             </div>
 
             {/* Business Profile */}

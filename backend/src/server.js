@@ -14,6 +14,7 @@ import inboxRouter from "./routes/inbox.route.js";
 import membersRouter from "./routes/members.route.js";
 import plansRouter from "./routes/plans.route.js";
 import { authenticateToken, scopeToGym } from "./middleware/auth.js";
+import "./lib/queue.js";
 
 
 const app = express();

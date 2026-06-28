@@ -48,6 +48,15 @@ enum WhatsappSessionStatus {
   QR_READY
 }
 
+enum WhatsAppDisplayNameStatus {
+  PENDING_REVIEW
+  APPROVED
+  DECLINED
+  REGISTERING
+  REGISTERED
+  REGISTRATION_FAILED
+}
+
 model Gym {
   id               String            @id @default(uuid())
   name             String
@@ -70,6 +79,13 @@ model Gym {
   whatsappMessagingTier      String?           @default("UNKNOWN")
   whatsappVerifiedName       String?
   whatsappDisplayPhoneNumber String?
+  whatsappNameStatus         WhatsAppDisplayNameStatus?
+  pendingDisplayName         String?
+  pendingNameStatus          WhatsAppDisplayNameStatus?
+  lastNameChangeRequestAt    DateTime?
+  lastNameApprovedAt         DateTime?
+  lastRegistrationAttemptAt  DateTime?
+  registrationError          String?
 
   users            GymUser[]
   members          Member[]
@@ -85,6 +101,30 @@ model Gym {
   auditLogs        AuditLog[]
   whatsappMessages  WhatsAppMessage[]
   whatsappTemplates WhatsAppTemplate[]
+  whatsappDisplayNameHistory WhatsAppDisplayNameHistory[]
+}
+
+model WhatsAppDisplayNameHistory {
+  id                  String                    @id @default(uuid())
+  gymId               String
+  requestedByUserId   String?
+
+  phoneNumberId       String
+  graphApiVersion     String
+
+  oldName             String?
+  newName             String
+  status              WhatsAppDisplayNameStatus
+  isActive            Boolean                   @default(true)
+
+  metaResponse        Json?
+
+  requestedAt         DateTime                  @default(now())
+  approvedAt          DateTime?
+  registeredAt        DateTime?
+  rejectionReason     String?
+
+  gym                 Gym                       @relation(fields: [gymId], references: [id], onDelete: Cascade)
 }
 
 model GymUser {

@@ -18,7 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming this exists, I will check. If not I will define a simple one or omit.
+
 
 interface DashboardShellProps {
   children: React.ReactNode;
