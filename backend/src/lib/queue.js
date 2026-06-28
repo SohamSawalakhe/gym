@@ -44,8 +44,8 @@ cron.schedule("* * * * *", async () => {
   }
 });
 
-// 2. Auto-checker to sync PENDING_REVIEW gyms with Meta (every 1 minute)
-cron.schedule("* * * * *", async () => {
+// 2. Auto-checker to sync PENDING_REVIEW gyms with Meta (every 15 minutes)
+cron.schedule("*/15 * * * *", async () => {
   try {
     const pendingGyms = await prisma.gym.findMany({
       where: { pendingNameStatus: "PENDING_REVIEW", whatsapp_access_token: { not: null }, whatsapp_phone_number_id: { not: null } }
