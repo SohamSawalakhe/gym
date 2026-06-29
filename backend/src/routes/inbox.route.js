@@ -91,6 +91,18 @@ router.get("/", async (req, res) => {
           }
         });
 
+        // Check for active membership
+        const activeMembership = await prisma.membership.findFirst({
+          where: {
+            memberId: member.id,
+            status: "ACTIVE",
+            endDate: { gte: new Date() }
+          },
+          include: {
+            plan: true
+          }
+        });
+
         const parsedText = lastMessage ? parseMessageText(lastMessage.text) : null;
 
         // Compute WhatsApp 24-hour session window details
@@ -112,11 +124,14 @@ router.get("/", async (req, res) => {
 
         return {
           id: member.id,
-          name: member.name,
+          name: member.memberName,
+          whatsappName: member.whatsappName,
           phone: member.phone,
           isBotDisabled: member.isBotDisabled,
           notes: member.notes,
           isBlocked: !!member.blockedAt,
+          isMember: !!activeMembership,
+          planName: activeMembership ? activeMembership.plan.name : null,
           lastMessage: lastMessage
             ? {
                 id: lastMessage.id,
@@ -130,7 +145,8 @@ router.get("/", async (req, res) => {
           unreadCount,
           sessionStarted,
           sessionActive,
-          sessionExpiresAt
+          sessionExpiresAt,
+          callPermissionStatus: member.callPermissionStatus
         };
       })
     );
@@ -172,6 +188,17 @@ router.get("/:memberId", async (req, res) => {
     if (!member || member.gymId !== gym.id) {
       return res.status(404).json({ error: "Member not found" });
     }
+
+    const activeMembership = await prisma.membership.findFirst({
+      where: {
+        memberId: member.id,
+        status: "ACTIVE",
+        endDate: { gte: new Date() }
+      },
+      include: {
+        plan: true
+      }
+    });
 
     const messages = await prisma.whatsAppMessage.findMany({
       where: {
@@ -221,11 +248,15 @@ router.get("/:memberId", async (req, res) => {
       conversationId: member.id,
       member: {
         id: member.id,
-        name: member.name,
+        name: member.memberName,
+        whatsappName: member.whatsappName,
         phone: member.phone,
         isBotDisabled: member.isBotDisabled,
         notes: member.notes,
-        blockedAt: member.blockedAt
+        blockedAt: member.blockedAt,
+        isMember: !!activeMembership,
+        planName: activeMembership ? activeMembership.plan.name : null,
+        callPermissionStatus: member.callPermissionStatus
       },
       sessionStarted,
       sessionActive,
@@ -494,8 +525,8 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
       data: {
         action: isBotDisabled ? "BOT_TAKEOVER_START" : "BOT_TAKEOVER_STOP",
         details: isBotDisabled
-          ? `Human took over conversation with member ${member.name} (${member.phone}). Bot paused.`
-          : `Chatbot resumed control for member ${member.name} (${member.phone}).`,
+          ? `Human took over conversation with member ${member.memberName} (${member.phone}). Bot paused.`
+          : `Chatbot resumed control for member ${member.memberName} (${member.phone}).`,
         gymId: gym.id,
         userId: req.user?.userId || null
       }
@@ -626,7 +657,7 @@ router.post("/check-number", async (req, res) => {
         lead: {
           id: existingMember.id,
           phoneNumber: existingMember.phone,
-          companyName: existingMember.name
+          memberName: existingMember.memberName
         }
       });
     }
@@ -649,7 +680,7 @@ router.post("/check-number", async (req, res) => {
  */
 router.post("/create-conversation", async (req, res) => {
   const { gymSlug } = req.params;
-  const { phoneNumber, companyName } = req.body;
+  const { phoneNumber, memberName } = req.body;
 
   if (!phoneNumber) {
     return res.status(400).json({ error: "Phone number is required" });
@@ -681,14 +712,14 @@ router.post("/create-conversation", async (req, res) => {
         data: {
           gymId: gym.id,
           phone: formattedNumber,
-          name: companyName || formattedNumber
+          memberName: memberName || formattedNumber
         }
       });
 
       await prisma.auditLog.create({
         data: {
           action: "MEMBER_CREATE",
-          details: `Member ${member.name} (${formattedNumber}) created via start conversation in inbox.`,
+          details: `Member ${member.memberName} (${formattedNumber}) created via start conversation in inbox.`,
           gymId: gym.id,
           userId: req.user?.userId || null
         }
@@ -708,7 +739,7 @@ router.post("/create-conversation", async (req, res) => {
       lead: {
         id: member.id,
         phoneNumber: member.phone,
-        companyName: member.name
+        memberName: member.memberName
       }
     });
   } catch (err) {
