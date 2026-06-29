@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
             member: {
               select: {
                 id: true,
-                name: true,
+                memberName: true,
                 phone: true
               }
             }
@@ -39,7 +39,20 @@ router.get("/", async (req, res) => {
       orderBy: { createdAt: "desc" }
     });
 
-    res.json({ plans });
+    // Map memberName to name for frontend compatibility in plans
+    const mappedPlans = plans.map(p => ({
+      ...p,
+      memberships: p.memberships.map(m => ({
+        ...m,
+        member: {
+          ...m.member,
+          name: m.member.memberName || ''
+        }
+      }))
+    }));
+
+
+    res.json({ plans: mappedPlans });
   } catch (err) {
     console.error("❌ [Plans GET] Error:", err);
     res.status(500).json({ error: "Internal Server Error" });

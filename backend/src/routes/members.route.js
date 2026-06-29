@@ -37,7 +37,7 @@ router.get("/", async (req, res) => {
     // Map memberName to name for frontend compatibility
     const mappedMembers = members.map(m => ({
       ...m,
-      name: m.memberName
+      name: m.memberName || ''
     }));
 
     res.json({ members: mappedMembers });
@@ -54,9 +54,8 @@ router.get("/", async (req, res) => {
  */
 router.post("/", async (req, res) => {
   const { gymSlug } = req.params;
-  const { name, memberName, phone, email, address, dob, emergencyContact, notes } = req.body;
+  const { name, memberName, phone, email, address, dob, emergencyContact, notes, planId, startDate, endDate } = req.body;
   const actualName = name || memberName;
-  const { name, phone, email, address, dob, emergencyContact, notes, planId, startDate, endDate } = req.body;
 
   if (!actualName || !phone) {
     return res.status(400).json({ error: "Name and Phone number are required" });
@@ -65,7 +64,6 @@ router.post("/", async (req, res) => {
   try {
     const gym = await prisma.gym.findUnique({
       where: { slug: gymSlug.toLowerCase() },
-      select: { id: true, name: true }
       select: { id: true, name: true }
     });
 
@@ -90,20 +88,10 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "A member with this phone number is already registered." });
     }
 
-    const newMember = await prisma.member.create({
-      data: {
-        gymId: gym.id,
-        memberName: actualName,
-        phone: formattedPhone,
-        email: email || null,
-        address: address || null,
-        dob: dob ? new Date(dob) : null,
-        emergencyContact: emergencyContact || null,
-        notes: notes || null
-      },
+
     const memberData = {
       gymId: gym.id,
-      name,
+      memberName: actualName,
       phone: formattedPhone,
       email: email || null,
       address: address || null,
@@ -131,19 +119,6 @@ router.post("/", async (req, res) => {
           include: { plan: true }
         }
       }
-    });
-
-    // Queue welcome template message for the new member
-    await prisma.notification.create({
-      data: {
-        gymId: gym.id,
-        memberId: newMember.id,
-        recipientPhone: formattedPhone,
-        title: `TEMPLATE:welcome_member:${name},${gym.name}`,
-        message: `Welcome ${name} to ${gym.name}! Your account has been registered successfully.`,
-        type: "ACTIVATION",
-        status: "PENDING",
-      },
     });
 
     // Queue welcome template message for the new member
@@ -224,7 +199,7 @@ router.post("/:memberId/toggle-bot", async (req, res) => {
     await prisma.auditLog.create({
       data: {
         action: isBotDisabled ? "BOT_PAUSE" : "BOT_RESUME",
-        details: `${isBotDisabled ? "Paused" : "Resumed"} chatbot for member ${member.name} (${member.phone})`,
+        details: `${isBotDisabled ? "Paused" : "Resumed"} chatbot for member ${member.memberName || ''} (${member.phone})`,
         gymId: member.gymId,
         userId: req.user?.userId || null,
       },
@@ -287,7 +262,7 @@ router.put("/:memberId", async (req, res) => {
     const member = await prisma.member.update({
       where: { id: memberId },
       data: {
-        name,
+        memberName: name,
         phone: formattedPhone,
         email: email || null,
         address: address || null,
@@ -381,7 +356,7 @@ router.delete("/:memberId", async (req, res) => {
     await prisma.auditLog.create({
       data: {
         action: "MEMBER_DELETE",
-        details: `Deleted member ${member.name} (${member.phone})`,
+        details: `Deleted member ${member.memberName || ''} (${member.phone})`,
         gymId: gym.id,
         userId: req.user?.userId || null,
       },
